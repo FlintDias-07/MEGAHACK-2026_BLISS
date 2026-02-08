@@ -1,10 +1,12 @@
 package com.safepulse.ui.screens
 
 import android.app.Application
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -723,14 +726,26 @@ private fun AddContactDialog(
                 
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { 
-                        phone = it
-                        errorMessage = null
+                    onValueChange = { newValue ->
+                        // Only allow digits, max 10 characters
+                        if (newValue.all { it.isDigit() } && newValue.length <= 10) {
+                            phone = newValue
+                            errorMessage = null
+                        }
                     },
-                    label = { Text("Phone Number") },
+                    label = { Text("Phone Number (10 digits)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    isError = errorMessage != null && phone.isBlank()
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = phone.isNotEmpty() && phone.length != 10,
+                    supportingText = {
+                        val color = if (phone.length == 10) SafeGreen else if (phone.isEmpty()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.error
+                        Text(
+                            "${phone.length}/10 digits",
+                            color = color,
+                            fontWeight = if (phone.length == 10) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 )
                 
                 Row(
@@ -755,15 +770,19 @@ private fun AddContactDialog(
             }
         },
         confirmButton = {
+            val isValid = name.isNotBlank() && phone.length == 10 && phone.all { it.isDigit() }
+            
             TextButton(
                 onClick = {
                     when {
                         name.isBlank() -> errorMessage = "Please enter a name"
                         phone.isBlank() -> errorMessage = "Please enter a phone number"
-                        phone.length < 10 -> errorMessage = "Invalid phone number"
+                        phone.length != 10 -> errorMessage = "Phone number must be exactly 10 digits"
+                        !phone.all { it.isDigit() } -> errorMessage = "Phone number must contain only digits"
                         else -> onAdd(name.trim(), phone.trim(), isPrimary)
                     }
-                }
+                },
+                enabled = isValid
             ) {
                 Text("Add")
             }

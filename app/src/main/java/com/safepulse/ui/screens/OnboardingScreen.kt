@@ -422,34 +422,74 @@ private fun AddContactDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add Emergency Contact") },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = { 
+                        name = it
+                        errorMessage = null
+                    },
                     label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    isError = errorMessage != null && name.isBlank()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("Phone Number") },
+                    onValueChange = { newValue ->
+                        // Only allow digits, max 10 characters
+                        if (newValue.all { it.isDigit() } && newValue.length <= 10) {
+                            phone = newValue
+                            errorMessage = null
+                        }
+                    },
+                    label = { Text("Phone Number (10 digits)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = phone.isNotEmpty() && phone.length != 10,
+                    supportingText = {
+                        val color = if (phone.length == 10) SafeGreen 
+                                   else if (phone.isEmpty()) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) 
+                                   else MaterialTheme.colorScheme.error
+                        Text(
+                            "${phone.length}/10 digits",
+                            color = color,
+                            fontWeight = if (phone.length == 10) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
                 )
+                
+                errorMessage?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         },
         confirmButton = {
+            val isValid = name.isNotBlank() && phone.length == 10 && phone.all { it.isDigit() }
+            
             Button(
-                onClick = { onAdd(name, phone) },
-                enabled = name.isNotBlank() && phone.isNotBlank()
+                onClick = {
+                    when {
+                        name.isBlank() -> errorMessage = "Please enter a name"
+                        phone.isBlank() -> errorMessage = "Please enter a phone number"
+                        phone.length != 10 -> errorMessage = "Phone number must be exactly 10 digits"
+                        !phone.all { it.isDigit() } -> errorMessage = "Phone number must contain only digits"
+                        else -> onAdd(name.trim(), phone.trim())
+                    }
+                },
+                enabled = isValid
             ) {
                 Text("Add")
             }

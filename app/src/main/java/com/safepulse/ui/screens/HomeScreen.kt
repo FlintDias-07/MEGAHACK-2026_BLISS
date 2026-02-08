@@ -29,10 +29,14 @@ import com.safepulse.domain.model.RiskLevel
 import com.safepulse.domain.model.SafetyMode
 import com.safepulse.ml.StubVoiceTriggerModule
 import com.safepulse.ui.components.LiveMapCard
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import com.safepulse.ui.onboarding.TutorialTargetRegistry
+import com.safepulse.ui.onboarding.tutorialTarget
 import com.safepulse.ui.theme.*
 import com.safepulse.ui.viewmodel.HomeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onNavigateToLogs: () -> Unit,
@@ -43,6 +47,24 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    
+    // Auto-scroll for tutorial
+    val requesters = remember {
+        mapOf(
+            "main_sos_button" to BringIntoViewRequester(),
+            "voice_trigger_card" to BringIntoViewRequester(),
+            "quick_actions" to BringIntoViewRequester(),
+            "risk_map_card" to BringIntoViewRequester(),
+            "safe_routes_card" to BringIntoViewRequester()
+        )
+    }
+    
+    val activeTargetId = TutorialTargetRegistry.activeTargetId
+    LaunchedEffect(activeTargetId) {
+        activeTargetId?.let { id ->
+            requesters[id]?.bringIntoView()
+        }
+    }
     
     Scaffold(
         topBar = {
@@ -117,7 +139,10 @@ fun HomeScreen(
             // Main SOS button
             SOSButton(
                 isActive = state.isServiceRunning,
-                onClick = { viewModel.toggleService() }
+                onClick = { viewModel.toggleService() },
+                modifier = Modifier
+                    .tutorialTarget("main_sos_button")
+                    .bringIntoViewRequester(requesters["main_sos_button"]!!)
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -137,7 +162,10 @@ fun HomeScreen(
             var showVoiceDemoDialog by remember { mutableStateOf(false) }
             
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .tutorialTarget("voice_trigger_card")
+                    .bringIntoViewRequester(requesters["voice_trigger_card"]!!),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -209,7 +237,10 @@ fun HomeScreen(
             
             // Quick actions
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .tutorialTarget("quick_actions")
+                    .bringIntoViewRequester(requesters["quick_actions"]!!),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -259,7 +290,9 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onNavigateToRiskMap() },
+                        .clickable { onNavigateToRiskMap() }
+                        .tutorialTarget("risk_map_card")
+                        .bringIntoViewRequester(requesters["risk_map_card"]!!),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFFFF3E0)
@@ -293,7 +326,9 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onNavigateToSafeRoutes() },
+                        .clickable { onNavigateToSafeRoutes() }
+                        .tutorialTarget("safe_routes_card")
+                        .bringIntoViewRequester(requesters["safe_routes_card"]!!),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFE8F5E9)
@@ -455,7 +490,8 @@ private fun ModeBadge(mode: SafetyMode, modifier: Modifier = Modifier) {
 @Composable
 private fun SOSButton(
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "sos")
     val scale by infiniteTransition.animateFloat(
@@ -479,7 +515,8 @@ private fun SOSButton(
     )
     
     Box(
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
+        modifier = modifier
     ) {
         // Outer glow
         if (isActive) {

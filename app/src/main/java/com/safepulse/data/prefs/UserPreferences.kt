@@ -17,6 +17,7 @@ class UserPreferences(private val context: Context) {
         val GENDER = stringPreferencesKey(SafetyConstants.PREF_KEY_GENDER)
         val VOICE_TRIGGER_ENABLED = booleanPreferencesKey(SafetyConstants.PREF_KEY_VOICE_TRIGGER_ENABLED)
         val ONBOARDING_COMPLETE = booleanPreferencesKey(SafetyConstants.PREF_KEY_ONBOARDING_COMPLETE)
+        val ONBOARDING_TUTORIAL_COMPLETE = booleanPreferencesKey("onboarding_tutorial_complete")
         val SERVICE_ENABLED = booleanPreferencesKey(SafetyConstants.PREF_KEY_SERVICE_ENABLED)
         val DARK_MODE = booleanPreferencesKey(SafetyConstants.PREF_KEY_DARK_MODE)
     }
@@ -80,6 +81,17 @@ class UserPreferences(private val context: Context) {
         }
     }
     
+    // Onboarding Tutorial Complete
+    val onboardingTutorialCompleteFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[PreferencesKeys.ONBOARDING_TUTORIAL_COMPLETE] ?: false
+    }
+    
+    suspend fun setOnboardingTutorialComplete(complete: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.ONBOARDING_TUTORIAL_COMPLETE] = complete
+        }
+    }
+    
     // Get all settings as UserSettings object
     val userSettingsFlow: Flow<UserSettings> = context.dataStore.data.map { prefs ->
         UserSettings(
@@ -90,6 +102,7 @@ class UserPreferences(private val context: Context) {
             },
             voiceTriggerEnabled = prefs[PreferencesKeys.VOICE_TRIGGER_ENABLED] ?: false,
             onboardingComplete = prefs[PreferencesKeys.ONBOARDING_COMPLETE] ?: false,
+            onboardingTutorialComplete = prefs[PreferencesKeys.ONBOARDING_TUTORIAL_COMPLETE] ?: false,
             serviceEnabled = prefs[PreferencesKeys.SERVICE_ENABLED] ?: false,
             darkModeEnabled = prefs[PreferencesKeys.DARK_MODE] ?: false
         )
@@ -100,6 +113,7 @@ data class UserSettings(
     val gender: Gender,
     val voiceTriggerEnabled: Boolean,
     val onboardingComplete: Boolean,
+    val onboardingTutorialComplete: Boolean,
     val serviceEnabled: Boolean,
     val darkModeEnabled: Boolean
 )

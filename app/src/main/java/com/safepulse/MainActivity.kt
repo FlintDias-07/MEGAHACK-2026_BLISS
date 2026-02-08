@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.safepulse.data.prefs.UserPreferences
+import com.safepulse.ui.onboarding.OnboardingOverlayScreen
 import com.safepulse.ui.screens.*
 import com.safepulse.ui.theme.SafePulseTheme
 import com.safepulse.utils.PermissionHelper
@@ -61,23 +63,35 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var onboardingComplete by remember { mutableStateOf<Boolean?>(null) }
+                    var tutorialComplete by remember { mutableStateOf<Boolean?>(null) }
 
                     LaunchedEffect(Unit) {
                         onboardingComplete = userPreferences.onboardingCompleteFlow.first()
+                        tutorialComplete = userPreferences.onboardingTutorialCompleteFlow.first()
                     }
 
-                    when (onboardingComplete) {
-                        null -> {
+                    when {
+                        onboardingComplete == null || tutorialComplete == null -> {
                             // Loading state - could show splash
                         }
-                        false -> {
+                        onboardingComplete == false -> {
+                            // Show permission onboarding first
                             OnboardingFlow(
                                 onComplete = {
                                     onboardingComplete = true
                                 }
                             )
                         }
-                        true -> {
+                        tutorialComplete == false -> {
+                            // Show voice-guided tutorial after permissions are done
+                            MainNavigationWithTutorial(
+                                onTutorialComplete = {
+                                    tutorialComplete = true
+                                }
+                            )
+                        }
+                        else -> {
+                            // Both complete, show normal navigation
                             MainNavigation()
                         }
                     }
@@ -145,6 +159,26 @@ fun MainNavigation() {
         composable("risk_map") {
             RiskMapScreenWrapper(
                 onBack = { navController.popBackStack() }
+            )
+        }
+    }
+}
+
+@Composable
+fun MainNavigationWithTutorial(onTutorialComplete: () -> Unit) {
+    var showTutorial by remember { mutableStateOf(true) }
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Main navigation as background
+        MainNavigation()
+        
+        // Tutorial overlay on top
+        if (showTutorial) {
+            OnboardingOverlayScreen(
+                onComplete = {
+                    showTutorial = false
+                    onTutorialComplete()
+                }
             )
         }
     }

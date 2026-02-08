@@ -125,7 +125,14 @@ fun MainNavigation() {
         composable("settings") {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
-                onNavigateToRiskMap = { navController.navigate("risk_map") }
+                onNavigateToRiskMap = { navController.navigate("risk_map") },
+                onNavigateToUserManual = { navController.navigate("user_manual") }
+            )
+        }
+        
+        composable("user_manual") {
+            UserManualScreen(
+                onBack = { navController.popBackStack() }
             )
         }
         

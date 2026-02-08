@@ -125,6 +125,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToRiskMap: () -> Unit = {},
+    onNavigateToUserManual: () -> Unit = {},
     viewModel: SettingsViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -433,6 +434,35 @@ fun SettingsScreen(
                             subtitle = "Offline-first Safety Application",
                             iconColor = PrimaryRed
                         )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.MenuBook,
+                                contentDescription = null,
+                                tint = SafeGreen
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("User Manual", fontWeight = FontWeight.Medium)
+                                Text(
+                                    "Learn about all features",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            IconButton(onClick = onNavigateToUserManual) {
+                                Icon(
+                                    Icons.Default.ChevronRight,
+                                    contentDescription = "Open User Manual",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -1,0 +1,707 @@
+package com.safepulse.ui.screens
+
+import android.app.Application
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.safepulse.SafePulseApplication
+import com.safepulse.data.db.entity.EmergencyContactEntity
+import com.safepulse.data.db.entity.HotspotEntity
+import com.safepulse.data.db.entity.UnsafeZoneEntity
+import com.safepulse.data.prefs.UserPreferences
+import com.safepulse.data.repository.EmergencyContactRepository
+import com.safepulse.data.repository.HotspotRepository
+import com.safepulse.data.repository.UnsafeZoneRepository
+import com.safepulse.domain.model.Gender
+import com.safepulse.ml.StubVoiceTriggerModule
+import com.safepulse.ui.theme.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
+// Settings ViewModel
+data class SettingsState(
+    val gender: Gender = Gender.UNSPECIFIED,
+    val voiceTriggerEnabled: Boolean = false,
+    val darkModeEnabled: Boolean = false,
+    val contacts: List<EmergencyContactEntity> = emptyList(),
+    val hotspots: List<HotspotEntity> = emptyList(),
+    val unsafeZones: List<UnsafeZoneEntity> = emptyList()
+)
+
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    private val app = application as SafePulseApplication
+    private val userPreferences = UserPreferences(application)
+    private val contactRepository = EmergencyContactRepository(app.database.emergencyContactDao())
+    private val hotspotRepository = HotspotRepository(app.database.hotspotDao())
+    private val unsafeZoneRepository = UnsafeZoneRepository(app.database.unsafeZoneDao())
+    
+    private val _state = MutableStateFlow(SettingsState())
+    val state: StateFlow<SettingsState> = _state.asStateFlow()
+    
+    init {
+        loadData()
+    }
+    
+    private fun loadData() {
+        viewModelScope.launch {
+            val settings = userPreferences.userSettingsFlow.first()
+            _state.value = _state.value.copy(
+                gender = settings.gender,
+                voiceTriggerEnabled = settings.voiceTriggerEnabled,
+                darkModeEnabled = settings.darkModeEnabled
+            )
+        }
+        
+        viewModelScope.launch {
+            contactRepository.getAllContacts().collect { contacts ->
+                _state.value = _state.value.copy(contacts = contacts)
+            }
+        }
+        
+        viewModelScope.launch {
+            hotspotRepository.getAllHotspots().collect { hotspots ->
+                _state.value = _state.value.copy(hotspots = hotspots)
+            }
+        }
+        
+        viewModelScope.launch {
+            unsafeZoneRepository.getAllUnsafeZones().collect { zones ->
+                _state.value = _state.value.copy(unsafeZones = zones)
+            }
+        }
+    }
+    
+    fun setVoiceTriggerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setVoiceTriggerEnabled(enabled)
+            _state.value = _state.value.copy(voiceTriggerEnabled = enabled)
+        }
+    }
+    
+    fun setDarkModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setDarkModeEnabled(enabled)
+            _state.value = _state.value.copy(darkModeEnabled = enabled)
+        }
+    }
+    
+    fun addContact(name: String, phone: String, isPrimary: Boolean) {
+        viewModelScope.launch {
+            val contact = EmergencyContactEntity(
+                name = name,
+                phone = phone,
+                isPrimary = isPrimary
+            )
+            contactRepository.insert(contact)
+        }
+    }
+    
+    fun deleteContact(contact: EmergencyContactEntity) {
+        viewModelScope.launch {
+            contactRepository.delete(contact)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onNavigateToRiskMap: () -> Unit = {},
+    viewModel: SettingsViewModel = viewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    var showZonesDialog by remember { mutableStateOf(false) }
+    var showVoiceDemoDialog by remember { mutableStateOf(false) }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            // Profile section
+            item {
+                SectionHeader("Profile")
+            }
+            
+            item {
+                SettingsCard {
+                    SettingsRow(
+                        icon = Icons.Default.Person,
+                        title = "Gender",
+                        subtitle = state.gender.name,
+                        iconColor = PrimaryRed
+                    )
+                }
+            }
+            
+            // Appearance section
+            item {
+                SectionHeader("Appearance")
+            }
+            
+            item {
+                SettingsCard {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.DarkMode,
+                            contentDescription = null,
+                            tint = if (state.darkModeEnabled) WarningYellow else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Dark Mode", fontWeight = FontWeight.Medium)
+                            Text(
+                                "Enable dark theme for better night viewing",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        Switch(
+                            checked = state.darkModeEnabled,
+                            onCheckedChange = { viewModel.setDarkModeEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    }
+                }
+            }
+            
+            // Emergency Contacts section
+            item {
+                SectionHeader("Emergency Contacts")
+            }
+            
+            item {
+                SettingsCard {
+                    Column {
+                        if (state.contacts.isEmpty()) {
+                            // Empty state
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Default.PersonOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "No emergency contacts added",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Add at least 2 contacts for emergency SOS",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                            }
+                        } else {
+                            state.contacts.forEachIndexed { index, contact ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        tint = if (contact.isPrimary) PrimaryRed else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(contact.name, fontWeight = FontWeight.Medium)
+                                            if (contact.isPrimary) {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = PrimaryRed.copy(alpha = 0.15f)
+                                                ) {
+                                                    Text(
+                                                        "PRIMARY",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = PrimaryRed,
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Text(
+                                            contact.phone,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    IconButton(onClick = { viewModel.deleteContact(contact) }) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                                if (index < state.contacts.size - 1) {
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                                }
+                            }
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        
+                        // Add Contact Button
+                        var showAddContactDialog by remember { mutableStateOf(false) }
+                        
+                        TextButton(
+                            onClick = { showAddContactDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Add Emergency Contact")
+                        }
+                        
+                        if (showAddContactDialog) {
+                            AddContactDialog(
+                                onDismiss = { showAddContactDialog = false },
+                                onAdd = { name, phone, isPrimary ->
+                                    viewModel.addContact(name, phone, isPrimary)
+                                    showAddContactDialog = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Voice Trigger section
+            item {
+                SectionHeader("Voice Trigger")
+            }
+            
+            item {
+                SettingsCard {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Mic,
+                                contentDescription = null,
+                                tint = if (state.voiceTriggerEnabled) SafeGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Voice Emergency", fontWeight = FontWeight.Medium)
+                                Text(
+                                    "Say \"Help\" or \"Emergency\" to trigger SOS",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            Switch(
+                                checked = state.voiceTriggerEnabled,
+                                onCheckedChange = { viewModel.setVoiceTriggerEnabled(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = SafeGreen
+                                )
+                            )
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        
+                        TextButton(
+                            onClick = { showVoiceDemoDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp)
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Test Voice Trigger (Demo)")
+                        }
+                    }
+                }
+            }
+            
+            // Zones section
+            item {
+                SectionHeader("Safety Zones")
+            }
+            
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsRow(
+                            icon = Icons.Default.Warning,
+                            title = "Accident Hotspots",
+                            subtitle = "${state.hotspots.size} zones loaded",
+                            iconColor = RiskHigh
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        SettingsRow(
+                            icon = Icons.Default.LocationOff,
+                            title = "Unsafe Zones",
+                            subtitle = "${state.unsafeZones.size} zones loaded",
+                            iconColor = WarningYellow
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        TextButton(
+                            onClick = { onNavigateToRiskMap() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp)
+                        ) {
+                            Icon(Icons.Default.Map, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("View on Risk Map")
+                        }
+                    }
+                }
+            }
+            
+            // About section
+            item {
+                SectionHeader("About")
+            }
+            
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsRow(
+                            icon = Icons.Default.Info,
+                            title = "Version",
+                            subtitle = "1.0.0 (Prototype)",
+                            iconColor = MaterialTheme.colorScheme.primary
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Shield,
+                            title = "SafePulse",
+                            subtitle = "Offline-first Safety Application",
+                            iconColor = PrimaryRed
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    // Zone Details Dialog
+    if (showZonesDialog) {
+        ZoneDetailsDialog(
+            hotspots = state.hotspots,
+            unsafeZones = state.unsafeZones,
+            onDismiss = { showZonesDialog = false }
+        )
+    }
+    
+    // Voice Demo Dialog
+    if (showVoiceDemoDialog) {
+        VoiceDemoDialog(
+            onDismiss = { showVoiceDemoDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(vertical = 4.dp)
+    )
+}
+
+@Composable
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun SettingsRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    iconColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = iconColor)
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(title, fontWeight = FontWeight.Medium)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ZoneDetailsDialog(
+    hotspots: List<HotspotEntity>,
+    unsafeZones: List<UnsafeZoneEntity>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Safety Zones") },
+        text = {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.heightIn(max = 400.dp)
+            ) {
+                item {
+                    Text(
+                        "Accident Hotspots",
+                        fontWeight = FontWeight.Bold,
+                        color = RiskHigh
+                    )
+                }
+                items(hotspots) { hotspot ->
+                    Text(
+                        "• ${String.format("%.4f", hotspot.lat)}, ${String.format("%.4f", hotspot.lng)} - Risk: ${(hotspot.baseRisk * 100).toInt()}% (${hotspot.roadType})",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Unsafe Zones",
+                        fontWeight = FontWeight.Bold,
+                        color = WarningYellow
+                    )
+                }
+                items(unsafeZones) { zone ->
+                    Text(
+                        "• ${String.format("%.4f", zone.lat)}, ${String.format("%.4f", zone.lng)} - Crime: ${(zone.crimeScore * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VoiceDemoDialog(onDismiss: () -> Unit) {
+    var testInput by remember { mutableStateOf("") }
+    var result by remember { mutableStateOf<String?>(null) }
+    val voiceModule = remember { StubVoiceTriggerModule() }
+    
+    LaunchedEffect(Unit) {
+        voiceModule.startListening()
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Voice Trigger Demo") },
+        text = {
+            Column {
+                Text(
+                    "This simulates voice keyword detection. Type a phrase containing trigger words:",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    "Keywords: \"help\", \"save me\", \"emergency\", \"bachao\"",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PrimaryRed
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = testInput,
+                    onValueChange = { testInput = it },
+                    label = { Text("Enter phrase") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Button(
+                    onClick = {
+                        val detected = voiceModule.processTextInput(testInput)
+                        result = if (detected) "⚠️ KEYWORD DETECTED - SOS would trigger!" else "✓ No keyword detected"
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Test")
+                }
+                
+                result?.let { r ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = r,
+                        fontWeight = FontWeight.Bold,
+                        color = if (r.contains("DETECTED")) DangerRed else SafeGreen
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddContactDialog(
+    onDismiss: () -> Unit,
+    onAdd: (name: String, phone: String, isPrimary: Boolean) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var isPrimary by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Emergency Contact") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { 
+                        name = it
+                        errorMessage = null
+                    },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = errorMessage != null && name.isBlank()
+                )
+                
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { 
+                        phone = it
+                        errorMessage = null
+                    },
+                    label = { Text("Phone Number") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = errorMessage != null && phone.isBlank()
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isPrimary,
+                        onCheckedChange = { isPrimary = it }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Set as primary contact")
+                }
+                
+                errorMessage?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    when {
+                        name.isBlank() -> errorMessage = "Please enter a name"
+                        phone.isBlank() -> errorMessage = "Please enter a phone number"
+                        phone.length < 10 -> errorMessage = "Invalid phone number"
+                        else -> onAdd(name.trim(), phone.trim(), isPrimary)
+                    }
+                }
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}

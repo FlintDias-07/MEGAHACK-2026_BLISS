@@ -1,0 +1,125 @@
+package com.safepulse.ui.saferoutes
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
+import com.safepulse.data.repository.SafeRoutesRepository
+import com.safepulse.domain.saferoutes.*
+import com.safepulse.ui.components.createMockRoutes
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+/**
+ * ViewModel for Safe Routes feature
+ */
+class SafeRoutesViewModel(
+    private val safeRoutesRepository: SafeRoutesRepository,
+    private val vehicleRecommender: VehicleRecommender
+) : ViewModel() {
+    
+    private val _uiState = MutableStateFlow<SafeRoutesUiState>(SafeRoutesUiState.Idle)
+    val uiState: StateFlow<SafeRoutesUiState> = _uiState.asStateFlow()
+    
+    private val _currentLocation = MutableStateFlow<LatLng?>(null)
+    val currentLocation: StateFlow<LatLng?> = _currentLocation.asStateFlow()
+    
+    private val _selectedRoute = MutableStateFlow<SafeRoute?>(null)
+    val selectedRoute: StateFlow<SafeRoute?> = _selectedRoute.asStateFlow()
+    
+    /**
+     * Update current location
+     */
+    fun updateCurrentLocation(location: LatLng) {
+        _currentLocation.value = location
+    }
+    
+    /**
+     * Search for safe routes to destination.
+     * Falls back to locally generated mock routes if the API call fails.
+     */
+    fun searchSafeRoutes(destination: LatLng) {
+        // Use current location or fall back to Delhi
+        val origin = _currentLocation.value ?: LatLng(28.6139, 77.2090).also {
+            _currentLocation.value = it
+        }
+        
+        viewModelScope.launch {
+            _uiState.value = SafeRoutesUiState.Loading
+            
+            try {
+                val routes = safeRoutesRepository.getSafeRoutes(origin, destination)
+                
+                if (routes.isEmpty()) {
+                    // Fallback to mock routes when API returns nothing
+                    val fallbackRoutes = createMockRoutes(origin, destination)
+                    val safestRoute = fallbackRoutes.first()
+                    val recommendation = vehicleRecommender.recommendVehicle(safestRoute)
+                    _uiState.value = SafeRoutesUiState.Success(
+                        routes = fallbackRoutes,
+                        vehicleRecommendation = recommendation
+                    )
+                } else {
+                    val safestRoute = routes.first()
+                    val recommendation = vehicleRecommender.recommendVehicle(safestRoute)
+                    
+                    _uiState.value = SafeRoutesUiState.Success(
+                        routes = routes,
+                        vehicleRecommendation = recommendation
+                    )
+                }
+            } catch (e: Exception) {
+                // Fallback to mock routes when API call fails
+                try {
+                    val fallbackRoutes = createMockRoutes(origin, destination)
+                    val safestRoute = fallbackRoutes.first()
+                    val recommendation = vehicleRecommender.recommendVehicle(safestRoute)
+                    _uiState.value = SafeRoutesUiState.Success(
+                        routes = fallbackRoutes,
+                        vehicleRecommendation = recommendation
+                    )
+                } catch (fallbackError: Exception) {
+                    _uiState.value = SafeRoutesUiState.Error(
+                        e.message ?: "Failed to find routes"
+                    )
+                }
+            }
+        }
+    }
+    
+    /**
+     * Select a specific route
+     */
+    fun selectRoute(route: SafeRoute) {
+        _selectedRoute.value = route
+        
+        // Update vehicle recommendation for selected route
+        val current = _uiState.value
+        if (current is SafeRoutesUiState.Success) {
+            val newRecommendation = vehicleRecommender.recommendVehicle(route)
+            _uiState.value = current.copy(vehicleRecommendation = newRecommendation)
+        }
+    }
+    
+    /**
+     * Clear search results
+     */
+    fun clearResults() {
+        _uiState.value = SafeRoutesUiState.Idle
+        _selectedRoute.value = null
+    }
+}
+
+/**
+ * UI state for Safe Routes screen
+ */
+sealed class SafeRoutesUiState {
+    object Idle : SafeRoutesUiState()
+    object Loading : SafeRoutesUiState()
+    data class Success(
+        val routes: List<SafeRoute>,
+        val vehicleRecommendation: VehicleRecommendation
+    ) : SafeRoutesUiState()
+    data class Error(val message: String) : SafeRoutesUiState()
+}

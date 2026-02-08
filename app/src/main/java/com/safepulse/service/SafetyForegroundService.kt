@@ -42,6 +42,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private lateinit var emergencyManager: EmergencyManager
     private lateinit var voiceTriggerModule: VoiceTriggerModule
     private lateinit var shakeDetector: ShakeDetector
+    private lateinit var confirmationService: EmergencyConfirmationService
     
     // Repositories
     private lateinit var hotspotRepository: HotspotRepository
@@ -95,6 +96,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         stopMonitoring()
+        confirmationService.cleanup()
         serviceScope.cancel()
         releaseWakeLock()
         
@@ -130,6 +132,12 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
         // Initialize shake detector
         shakeDetector = ShakeDetector(serviceScope)
         Log.d("SafetyService", "Shake detector initialized")
+        
+        // Initialize emergency confirmation service
+        confirmationService = EmergencyConfirmationService(this@SafetyForegroundService, serviceScope)
+        confirmationService.initialize {
+            Log.d("SafetyService", "Emergency confirmation service initialized")
+        }
     }
     
     private fun initializeSensors() {
@@ -402,8 +410,33 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     
     /**
      * Handle shake gesture emergency trigger
+     * Uses voice confirmation to prevent false positives
      */
     private fun handleShakeEmergency() {
+        Log.i("SafetyService", "🚨 Triple shake detected - starting confirmation...")
+        
+        // Start voice confirmation
+        // Note: Voice trigger is NOT paused because it's only active when manually triggered via button
+        confirmationService.startConfirmation { confirmed ->
+            if (confirmed) {
+                Log.i("SafetyService", "✅ Emergency confirmed - proceeding")
+                proceedWithShakeEmergency()
+            } else {
+                Log.i("SafetyService", "🚫 User said NO - STOPPING protection service")
+                shakeDetector.reset()
+                
+                // Stop the entire service when user says "no"
+                // This turns off the protection (START button will deactivate)
+                stopMonitoring()
+                stopSelf()
+            }
+        }
+    }
+    
+    /**
+     * Proceed with shake emergency after confirmation
+     */
+    private fun proceedWithShakeEmergency() {
         serviceScope.launch {
             try {
                 // Get emergency contacts

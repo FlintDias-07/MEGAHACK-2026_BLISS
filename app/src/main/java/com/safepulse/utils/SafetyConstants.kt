@@ -13,6 +13,7 @@ object SafetyConstants {
     // ============ Emergency Thresholds ============
     const val EMERGENCY_CONFIDENCE_THRESHOLD = 0.75f
     const val CANCEL_WINDOW_SECONDS = 10
+    const val CONFIRMATION_TIMEOUT_SECONDS = 10  // Voice confirmation timeout for shake gesture
     const val EMERGENCY_NUMBER = "112"
     
     // ============ Sensor Thresholds ============

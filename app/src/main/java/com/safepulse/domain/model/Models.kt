@@ -94,5 +94,6 @@ data class EmergencyEvent(
     val confidence: Float,
     val location: LocationData?,
     val timestamp: Long = System.currentTimeMillis(),
-    val requiresConfirmation: Boolean = true
+    val requiresConfirmation: Boolean = true,
+    val silent: Boolean = false // True for discreet alerts (SMS only, no call)
 )

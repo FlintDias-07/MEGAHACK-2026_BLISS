@@ -15,6 +15,7 @@ class RiskZoneRepository(private val context: Context) {
 
     private var crimeZonesCache: List<CrimeRiskZone>? = null
     private var disasterZonesCache: List<DisasterRiskZone>? = null
+    private var safetyPlacesCache: List<SafetyPlace>? = null
 
     fun loadCrimeRiskZones(): List<CrimeRiskZone> {
         crimeZonesCache?.let { return it }
@@ -55,6 +56,53 @@ class RiskZoneRepository(private val context: Context) {
             crimeZones = loadCrimeRiskZones(),
             disasterZones = loadDisasterRiskZones()
         )
+    }
+
+    /**
+     * Load police stations from police_stations_india.json (3,704 OSM entries)
+     * and hospitals from emergency_services.json, combining into one list.
+     */
+    fun loadSafetyPlaces(): List<SafetyPlace> {
+        safetyPlacesCache?.let { return it }
+
+        val places = mutableListOf<SafetyPlace>()
+
+        // Load police stations from the comprehensive OSM dataset
+        try {
+            val policeJson = context.assets.open("police_stations_india.json")
+                .bufferedReader().use { it.readText() }
+            val policeType = object : TypeToken<List<PoliceStationJson>>() {}.type
+            val policeStations: List<PoliceStationJson> = Gson().fromJson(policeJson, policeType)
+            places.addAll(policeStations.map { it.toDomain() })
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Load hospitals from the comprehensive OSM dataset (54K entries)
+        try {
+            val hospitalJson = context.assets.open("hospitals_india.json")
+                .bufferedReader().use { it.readText() }
+            val hospitalType = object : TypeToken<List<HospitalJson>>() {}.type
+            val hospitals: List<HospitalJson> = Gson().fromJson(hospitalJson, hospitalType)
+            places.addAll(hospitals.map { it.toDomain() })
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        safetyPlacesCache = places
+        return places
+    }
+
+    /**
+     * Get safety places near a given location, sorted by distance
+     */
+    fun getSafetyPlacesNear(
+        location: LatLng,
+        maxDistanceKm: Double = 50.0
+    ): List<SafetyPlace> {
+        return loadSafetyPlaces()
+            .filter { distanceKm(location, it.location) <= maxDistanceKm }
+            .sortedBy { distanceKm(location, it.location) }
     }
 
     /**
@@ -353,6 +401,70 @@ private data class CrimeHotspotJson(
         location = LatLng(lat, lng),
         risk = risk,
         label = label
+    )
+}
+
+private data class SafetyPlaceJson(
+    val id: Long,
+    val name: String,
+    val type: String,
+    val address: String,
+    val phoneNumber: String,
+    val lat: Double,
+    val lng: Double,
+    val city: String
+) {
+    fun toDomain() = SafetyPlace(
+        id = id,
+        name = name,
+        type = when (type) {
+            "HOSPITAL" -> SafetyPlaceType.HOSPITAL
+            else -> SafetyPlaceType.POLICE
+        },
+        address = address,
+        phoneNumber = phoneNumber,
+        location = LatLng(lat, lng),
+        city = city
+    )
+}
+
+/**
+ * JSON model for police_stations_india.json (OpenStreetMap data)
+ */
+private data class PoliceStationJson(
+    val id: Long,
+    val name: String,
+    val lat: Double,
+    val lng: Double
+) {
+    fun toDomain() = SafetyPlace(
+        id = id,
+        name = name,
+        type = SafetyPlaceType.POLICE,
+        address = "",
+        phoneNumber = "",
+        location = LatLng(lat, lng),
+        city = ""
+    )
+}
+
+/**
+ * JSON model for hospitals_india.json (OpenStreetMap data, 54K hospitals)
+ */
+private data class HospitalJson(
+    val id: Long,
+    val name: String,
+    val lat: Double,
+    val lng: Double
+) {
+    fun toDomain() = SafetyPlace(
+        id = id,
+        name = name,
+        type = SafetyPlaceType.HOSPITAL,
+        address = "",
+        phoneNumber = "",
+        location = LatLng(lat, lng),
+        city = ""
     )
 }
 

@@ -320,11 +320,20 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
         safetyEngine.triggerManualSOS()
     }
     
+    /**
+     * Trigger silent SOS - sends SMS without call, for discreet emergencies
+     */
+    fun triggerSilentSOS() {
+        safetyEngine.triggerSilentSOS()
+    }
+    
     private fun executeEmergencyResponse(event: EmergencyEvent) {
         serviceScope.launch {
             // Get emergency contacts
             val contacts = contactRepository.getAllContactsList()
             val primaryContact = contactRepository.getPrimaryContact()
+            
+            Log.i("SafetyService", if (event.silent) "🔇 Silent Alert - SMS only" else "🚨 Full Alert - SMS + Call")
             
             // Send SMS to all emergency contacts
             val smsSent = emergencyManager.sendSOSMessages(contacts, event)
@@ -332,8 +341,13 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
             // Send SMS to nearby emergency services (police/hospital)
             emergencyManager.sendAlertToNearbyServices(event)
             
-            // Initiate call to primary contact
-            emergencyManager.initiateEmergencyCall(primaryContact)
+            // Only initiate call if NOT silent mode
+            if (!event.silent) {
+                Log.i("SafetyService", "📞 Initiating emergency call...")
+                emergencyManager.initiateEmergencyCall(primaryContact)
+            } else {
+                Log.i("SafetyService", "🔇 Skipping call (silent mode)")
+            }
             
             // Log event
             eventLogRepository.logEvent(

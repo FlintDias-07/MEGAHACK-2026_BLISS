@@ -34,15 +34,32 @@ class RiskMapViewModel(
     private val _destination = MutableStateFlow<LatLng?>(null)
     val destination: StateFlow<LatLng?> = _destination.asStateFlow()
 
+    private val _safetyPlaces = MutableStateFlow<List<SafetyPlace>>(emptyList())
+    val safetyPlaces: StateFlow<List<SafetyPlace>> = _safetyPlaces.asStateFlow()
+
+    private val _showSafetyPlaces = MutableStateFlow(true)
+    val showSafetyPlaces: StateFlow<Boolean> = _showSafetyPlaces.asStateFlow()
+
     fun loadRiskData() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val data = riskZoneRepository.loadAllRiskData()
                 _uiState.value = RiskMapUiState.Success(data)
+                // Load safety places (limited to nearby when location available)
+                val loc = _currentLocation.value
+                _safetyPlaces.value = if (loc != null) {
+                    riskZoneRepository.getSafetyPlacesNear(loc, 30.0)
+                } else {
+                    riskZoneRepository.getSafetyPlacesNear(LatLng(28.6139, 77.2090), 30.0)
+                }
             } catch (e: Exception) {
                 _uiState.value = RiskMapUiState.Error(e.message ?: "Failed to load risk data")
             }
         }
+    }
+
+    fun toggleSafetyPlaces() {
+        _showSafetyPlaces.value = !_showSafetyPlaces.value
     }
 
     fun updateCurrentLocation(location: LatLng) {
@@ -67,6 +84,9 @@ class RiskMapViewModel(
                 nearbyCrimeZones = nearbyCrime.take(5),
                 nearbyDisasterZones = nearbyDisaster.take(5)
             )
+
+            // Refresh nearby safety places for the new location
+            _safetyPlaces.value = riskZoneRepository.getSafetyPlacesNear(location, 30.0)
         }
     }
 

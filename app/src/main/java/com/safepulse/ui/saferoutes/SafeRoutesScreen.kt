@@ -28,8 +28,14 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
+import com.safepulse.domain.riskmap.SafetyPlace
+import com.safepulse.domain.riskmap.SafetyPlaceType
 import com.safepulse.domain.saferoutes.*
 import com.safepulse.ui.components.DestinationSearchDialogNew
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import kotlinx.coroutines.launch
 
 /**
@@ -39,7 +45,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun SafeRoutesScreenWithMap(
     viewModel: SafeRoutesViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    safetyPlaces: List<SafetyPlace> = emptyList()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -85,10 +92,10 @@ fun SafeRoutesScreenWithMap(
     }
     
     // Update map when routes change
-    LaunchedEffect(uiState) {
-        if (uiState is SafeRoutesUiState.Success) {
-            val routes = (uiState as SafeRoutesUiState.Success).routes
-            googleMap?.let { map ->
+    LaunchedEffect(uiState, safetyPlaces) {
+        googleMap?.let { map ->
+            if (uiState is SafeRoutesUiState.Success) {
+                val routes = (uiState as SafeRoutesUiState.Success).routes
                 // Clear existing polylines
                 map.clear()
                 
@@ -110,6 +117,9 @@ fun SafeRoutesScreenWithMap(
                     )
                 }
                 
+                // Draw safety place markers after routes
+                drawSafetyPlaceMarkers(map, safetyPlaces, currentLocation)
+                
                 // Fit camera to show all routes
                 if (routes.isNotEmpty()) {
                     val bounds = LatLngBounds.builder()
@@ -118,6 +128,9 @@ fun SafeRoutesScreenWithMap(
                     }
                     map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
                 }
+            } else {
+                // Even when no routes, show nearby safety places on map
+                drawSafetyPlaceMarkers(map, safetyPlaces, currentLocation)
             }
         }
     }
@@ -286,6 +299,99 @@ private fun getCurrentLocation(
             onLocation(LatLng(it.latitude, it.longitude))
         }
     }
+}
+
+/**
+ * Draw nearby safety place markers (police stations and hospitals) on the map.
+ * Limits to places within 30 km of current location to avoid overcrowding.
+ */
+private fun drawSafetyPlaceMarkers(
+    map: GoogleMap,
+    safetyPlaces: List<SafetyPlace>,
+    currentLocation: LatLng?
+) {
+    val center = currentLocation ?: LatLng(28.6139, 77.2090)
+    val nearbyPlaces = safetyPlaces.filter { place ->
+        val dist = floatArrayOf(0f)
+        android.location.Location.distanceBetween(
+            center.latitude, center.longitude,
+            place.location.latitude, place.location.longitude,
+            dist
+        )
+        dist[0] <= 30_000f // 30 km radius
+    }
+
+    for (place in nearbyPlaces) {
+        val icon = when (place.type) {
+            SafetyPlaceType.POLICE -> createSRPoliceIcon()
+            SafetyPlaceType.HOSPITAL -> createSRHospitalIcon()
+        }
+        val emoji = when (place.type) {
+            SafetyPlaceType.POLICE -> "🚔"
+            SafetyPlaceType.HOSPITAL -> "🏥"
+        }
+        map.addMarker(
+            MarkerOptions()
+                .position(place.location)
+                .title("$emoji ${place.name}")
+                .icon(icon)
+                .anchor(0.5f, 0.5f)
+                .alpha(0.9f)
+                .zIndex(3f)
+        )
+    }
+}
+
+/** Blue shield with "P" for police */
+private fun createSRPoliceIcon(): BitmapDescriptor {
+    val size = 44
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF1565C0.toInt()
+        style = Paint.Style.FILL
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 2.5f
+    }
+    val rect = android.graphics.RectF(3f, 2f, 41f, 40f)
+    canvas.drawRoundRect(rect, 7f, 7f, bgPaint)
+    canvas.drawRoundRect(rect, 7f, 7f, borderPaint)
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        textSize = 26f
+        typeface = Typeface.DEFAULT_BOLD
+        textAlign = Paint.Align.CENTER
+    }
+    canvas.drawText("P", size / 2f, size / 2f + 8f, textPaint)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+/** Red cross on white circle for hospital */
+private fun createSRHospitalIcon(): BitmapDescriptor {
+    val size = 44
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.FILL
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD32F2F.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 2.5f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, 19f, bgPaint)
+    canvas.drawCircle(size / 2f, size / 2f, 19f, borderPaint)
+    val crossPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD32F2F.toInt()
+        style = Paint.Style.FILL
+    }
+    canvas.drawRect(19f, 9f, 25f, 35f, crossPaint)
+    canvas.drawRect(9f, 19f, 35f, 25f, crossPaint)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 @Composable

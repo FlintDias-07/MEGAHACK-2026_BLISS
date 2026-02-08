@@ -128,6 +128,30 @@ class SafetyEngine {
     }
     
     /**
+     * Trigger silent SOS - sends SMS only (no call) for discreet emergencies
+     */
+    fun triggerSilentSOS() {
+        val event = DetectedEvent(
+            type = EventType.MANUAL_SOS, // Use same type but will be handled silently
+            confidence = 1.0f,
+            location = _safetyState.value.location
+        )
+        val emergencyEvent = EmergencyEvent(
+            type = event.type,
+            confidence = event.confidence,
+            location = event.location,
+            requiresConfirmation = false,
+            silent = true // Mark as silent
+        )
+        
+        _emergencyEvent.value = emergencyEvent
+        _safetyState.value = _safetyState.value.copy(
+            isEmergency = true,
+            currentEvent = event
+        )
+    }
+    
+    /**
      * Clear emergency event (cancelled by user)
      */
     fun clearEmergency() {

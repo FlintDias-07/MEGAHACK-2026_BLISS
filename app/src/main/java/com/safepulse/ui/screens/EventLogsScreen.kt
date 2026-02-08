@@ -231,10 +231,11 @@ private fun EventCard(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // Footer row
+                // Footer badges with proper wrapping
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Confidence badge
                     Surface(
@@ -256,7 +257,8 @@ private fun EventCard(
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
                                     Icons.Default.Send,
@@ -264,7 +266,6 @@ private fun EventCard(
                                     modifier = Modifier.size(12.dp),
                                     tint = DangerRed
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "SOS Sent",
                                     style = MaterialTheme.typography.labelSmall,
@@ -283,10 +284,11 @@ private fun EventCard(
                             SafeGreen.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = event.mode,
+                            text = event.mode.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (event.mode == "HEIGHTENED") WarningYellow else SafeGreen,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            maxLines = 1
                         )
                     }
                 }

@@ -35,6 +35,10 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
 import com.safepulse.domain.riskmap.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 
 // Risk level colors
 private val HighRiskColor = Color(0xFFF44336)
@@ -45,6 +49,8 @@ private val LandslideColor = Color(0xFF795548)
 private val SafeRouteColor = Color(0xFF4CAF50)
 private val UnsafeRouteColor = Color(0xFFF44336)
 private val AltRouteColor = Color(0xFFFF9800)
+private val PoliceColor = Color(0xFF1565C0)
+private val HospitalColor = Color(0xFFD32F2F)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +65,8 @@ fun RiskMapScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val safeRoutes by viewModel.safeRoutes.collectAsState()
     val destination by viewModel.destination.collectAsState()
+    val safetyPlaces by viewModel.safetyPlaces.collectAsState()
+    val showSafetyPlaces by viewModel.showSafetyPlaces.collectAsState()
 
     var googleMap by remember { mutableStateOf<GoogleMap?>(null) }
     var mapView by remember { mutableStateOf<MapView?>(null) }
@@ -95,10 +103,14 @@ fun RiskMapScreen(
     }
 
     // Update map overlays when data or filter changes
-    LaunchedEffect(uiState, selectedFilter, safeRoutes, destination) {
+    LaunchedEffect(uiState, selectedFilter, safeRoutes, destination, showSafetyPlaces, safetyPlaces) {
         val map = googleMap ?: return@LaunchedEffect
         val state = uiState as? RiskMapUiState.Success ?: return@LaunchedEffect
-        drawRiskOverlays(map, state.riskData, selectedFilter, safeRoutes, currentLocation, destination)
+        drawRiskOverlays(
+            map, state.riskData, selectedFilter, safeRoutes,
+            currentLocation, destination,
+            if (showSafetyPlaces) safetyPlaces else emptyList()
+        )
     }
 
     Scaffold(
@@ -126,6 +138,14 @@ fun RiskMapScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.toggleSafetyPlaces() }) {
+                        Icon(
+                            Icons.Default.LocalHospital,
+                            "Toggle Safety Places",
+                            tint = if (showSafetyPlaces) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                    }
                     IconButton(onClick = { showDestinationDialog = true }) {
                         Icon(Icons.Default.Directions, "Safe Route")
                     }
@@ -308,6 +328,8 @@ private fun MapLegend(modifier: Modifier = Modifier) {
             LegendItem(LowRiskColor, "Low Crime Risk")
             LegendItem(FloodColor, "Flood Risk")
             LegendItem(LandslideColor, "Landslide Risk")
+            LegendItem(PoliceColor, "🚔 Police Station")
+            LegendItem(HospitalColor, "🏥 Hospital")
         }
     }
 }
@@ -638,7 +660,8 @@ private fun drawRiskOverlays(
     filter: RiskFilter,
     safeRoutes: List<SafeRouteOption>,
     currentLocation: LatLng?,
-    destination: LatLng?
+    destination: LatLng?,
+    safetyPlaces: List<SafetyPlace> = emptyList()
 ) {
     map.clear()
 
@@ -771,6 +794,101 @@ private fun drawRiskOverlays(
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
         } catch (_: Exception) {}
     }
+
+    // Draw police stations and hospitals with distinct custom icons
+    for (place in safetyPlaces) {
+        val icon = when (place.type) {
+            SafetyPlaceType.POLICE -> createPoliceMarkerIcon()
+            SafetyPlaceType.HOSPITAL -> createHospitalMarkerIcon()
+        }
+        val emoji = when (place.type) {
+            SafetyPlaceType.POLICE -> "🚔"
+            SafetyPlaceType.HOSPITAL -> "🏥"
+        }
+        val snippet = if (place.address.isNotEmpty() && place.phoneNumber.isNotEmpty())
+            "${place.address} • ${place.phoneNumber}"
+        else if (place.address.isNotEmpty()) place.address
+        else "Police Station"
+        map.addMarker(
+            MarkerOptions()
+                .position(place.location)
+                .title("$emoji ${place.name}")
+                .snippet(snippet)
+                .icon(icon)
+                .anchor(0.5f, 0.5f)
+                .alpha(0.95f)
+                .zIndex(3f)
+        )
+    }
+}
+
+/**
+ * Creates a blue shield-shaped marker icon for police stations
+ */
+private fun createPoliceMarkerIcon(): BitmapDescriptor {
+    val size = 48
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    // Blue filled shield/badge shape
+    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF1565C0.toInt() // Dark blue
+        style = Paint.Style.FILL
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    // Draw a shield-like rounded rect
+    val rect = android.graphics.RectF(4f, 2f, 44f, 42f)
+    canvas.drawRoundRect(rect, 8f, 8f, bgPaint)
+    canvas.drawRoundRect(rect, 8f, 8f, borderPaint)
+
+    // Draw "P" text in white
+    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        textSize = 28f
+        typeface = Typeface.DEFAULT_BOLD
+        textAlign = Paint.Align.CENTER
+    }
+    canvas.drawText("P", size / 2f, size / 2f + 9f, textPaint)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+/**
+ * Creates a red cross marker icon for hospitals
+ */
+private fun createHospitalMarkerIcon(): BitmapDescriptor {
+    val size = 48
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    // White circle background
+    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.FILL
+    }
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD32F2F.toInt() // Dark red
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, 20f, bgPaint)
+    canvas.drawCircle(size / 2f, size / 2f, 20f, borderPaint)
+
+    // Draw red cross
+    val crossPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD32F2F.toInt()
+        style = Paint.Style.FILL
+    }
+    // Vertical bar of cross
+    canvas.drawRect(20f, 10f, 28f, 38f, crossPaint)
+    // Horizontal bar of cross
+    canvas.drawRect(10f, 20f, 38f, 28f, crossPaint)
+
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 @SuppressLint("MissingPermission")

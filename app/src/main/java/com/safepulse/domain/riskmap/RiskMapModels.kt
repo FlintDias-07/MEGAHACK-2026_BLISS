@@ -74,6 +74,23 @@ enum class RiskType {
 }
 
 /**
+ * Nearby safety place (police station or hospital)
+ */
+data class SafetyPlace(
+    val id: Long,
+    val name: String,
+    val type: SafetyPlaceType,
+    val address: String,
+    val phoneNumber: String,
+    val location: LatLng,
+    val city: String
+)
+
+enum class SafetyPlaceType {
+    POLICE, HOSPITAL
+}
+
+/**
  * Safe route with risk avoidance scoring
  */
 data class SafeRouteOption(

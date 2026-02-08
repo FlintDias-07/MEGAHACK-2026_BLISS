@@ -135,6 +135,96 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    fun shareLocation() {
+        viewModelScope.launch {
+            val location = _state.value.currentLocation
+            val message = if (location != null) {
+                "📍 My current location: https://maps.google.com/?q=${location.latitude},${location.longitude}"
+            } else {
+                "📍 Sharing my location from SafePulse app"
+            }
+            
+            // Share via Android sharing intent
+            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(android.content.Intent.EXTRA_TEXT, message)
+                putExtra(android.content.Intent.EXTRA_SUBJECT, "My Location - SafePulse")
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            try {
+                val chooser = android.content.Intent.createChooser(shareIntent, "Share Location")
+                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                app.startActivity(chooser)
+            } catch (e: Exception) {
+                android.util.Log.e("HomeViewModel", "Error sharing location", e)
+            }
+        }
+    }
+    
+    /**
+     * Trigger a fake incoming call to help escape uncomfortable situations
+     */
+    fun triggerFakeCall() {
+        viewModelScope.launch {
+            try {
+                // Create a call-like notification
+                val notificationManager = app.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    val channel = android.app.NotificationChannel(
+                        "fake_call_channel",
+                        "Fake Call",
+                        android.app.NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        description = "Fake incoming call notifications"
+                        setSound(android.provider.Settings.System.DEFAULT_RINGTONE_URI, 
+                                android.media.AudioAttributes.Builder()
+                                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                    .build())
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                }
+                
+                val notification = androidx.core.app.NotificationCompat.Builder(app, "fake_call_channel")
+                    .setSmallIcon(android.R.drawable.sym_call_incoming)
+                    .setContentTitle("Incoming call...")
+                    .setContentText("Mom")
+                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(androidx.core.app.NotificationCompat.CATEGORY_CALL)
+                    .setFullScreenIntent(null, true)
+                    .setAutoCancel(true)
+                    .build()
+                
+                notificationManager.notify(999, notification)
+                android.util.Log.i("HomeViewModel", "Fake call triggered")
+            } catch (e: Exception) {
+                android.util.Log.e("HomeViewModel", "Error triggering fake call", e)
+            }
+        }
+    }
+    
+    /**
+     * Trigger silent alert - sends SOS without sound/vibration for discreet situations
+     */
+    fun triggerSilentAlert() {
+        viewModelScope.launch {
+            val service = SafetyForegroundService.getInstance()
+            if (service != null) {
+                android.util.Log.i("HomeViewModel", "🔇 Triggering silent alert...")
+                service.triggerSilentSOS()
+            } else {
+                // Service not running, start it first
+                if (!_state.value.isServiceRunning) {
+                    SafetyForegroundService.start(app)
+                    userPreferences.setServiceEnabled(true)
+                    kotlinx.coroutines.delay(1000)
+                }
+                SafetyForegroundService.getInstance()?.triggerSilentSOS()
+            }
+        }
+    }
+    
     fun updateRiskLevel(level: RiskLevel, score: Float) {
         _state.value = _state.value.copy(riskLevel = level, riskScore = score)
     }

@@ -38,6 +38,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToSafeRoutes: () -> Unit = {},
     onNavigateToRiskMap: () -> Unit = {},
+    onNavigateToEventLogs: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -163,37 +164,37 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         "Quick Actions",
-                        fontWeight = FontWeight.Medium,
-                        style = MaterialTheme.typography.titleSmall
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         QuickActionButton(
-                            text = "Manual SOS",
+                            text = "Manual\nSOS",
                             icon = Icons.Default.Sos,
                             color = DangerRed,
                             onClick = { viewModel.triggerManualSOS() },
                             modifier = Modifier.weight(1f)
                         )
                         QuickActionButton(
-                            text = "Test Alert",
-                            icon = Icons.Default.BugReport,
-                            color = WarningYellow,
-                            onClick = { viewModel.simulateHighRisk() },
+                            text = "Fake\nCall",
+                            icon = Icons.Default.PhoneInTalk,
+                            color = Color(0xFF2196F3),
+                            onClick = { viewModel.triggerFakeCall() },
                             modifier = Modifier.weight(1f)
                         )
                         QuickActionButton(
-                            text = "Reset",
-                            icon = Icons.Default.Refresh,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            onClick = { viewModel.resetDemo() },
+                            text = "Silent\nAlert",
+                            icon = Icons.Default.NotificationsOff,
+                            color = Color(0xFF9C27B0),
+                            onClick = { viewModel.triggerSilentAlert() },
                             modifier = Modifier.weight(1f)
                         )
                     }

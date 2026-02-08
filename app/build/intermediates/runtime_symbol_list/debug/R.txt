@@ -985,6 +985,7 @@ int drawable common_google_signin_btn_text_light_normal 0x7f07006a
 int drawable common_google_signin_btn_text_light_normal_background 0x7f07006b
 int drawable googleg_disabled_color_18 0x7f07006c
 int drawable googleg_standard_color_18 0x7f07006d
+int drawable ic_app_logo 0x7f070085
 int drawable ic_call_answer 0x7f07006e
 int drawable ic_call_answer_low 0x7f07006f
 int drawable ic_call_answer_video 0x7f070070

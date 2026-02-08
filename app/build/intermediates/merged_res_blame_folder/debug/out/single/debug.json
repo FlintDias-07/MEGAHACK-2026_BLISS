@@ -16,11 +16,19 @@
         "source": "C:\\Users\\elson\\.gradle\\daemon\\8.5\\com.safepulse.app-main-79:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
     },
     {
+        "merged": "com.safepulse.app-merged_res-77:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.safepulse.app-main-79:/drawable/ic_launcher_foreground.xml"
+    },
+    {
         "merged": "C:\\Users\\elson\\.gradle\\daemon\\8.5\\com.safepulse.app-merged_res-77:\\drawable_ic_launcher_foreground.xml.flat",
         "source": "C:\\Users\\elson\\.gradle\\daemon\\8.5\\com.safepulse.app-main-79:\\drawable\\ic_launcher_foreground.xml"
     },
     {
         "merged": "C:\\Users\\elson\\.gradle\\daemon\\8.5\\com.safepulse.app-merged_res-77:\\drawable_ic_police_marker.xml.flat",
         "source": "C:\\Users\\elson\\.gradle\\daemon\\8.5\\com.safepulse.app-main-79:\\drawable\\ic_police_marker.xml"
+    },
+    {
+        "merged": "com.safepulse.app-merged_res-77:/drawable_ic_app_logo.xml.flat",
+        "source": "com.safepulse.app-main-79:/drawable/ic_app_logo.xml"
     }
 ]

@@ -32,6 +32,7 @@ data class HomeState(
     val sosCount: Int = 0,
     val emergencyContacts: List<EmergencyContactEntity> = emptyList(),
     val isOnboardingComplete: Boolean = true,
+    val voiceTriggerEnabled: Boolean = false,
     // Map state
     val currentLocation: LatLng? = null,
     val crimeHotspots: List<HotspotEntity> = emptyList(),
@@ -60,7 +61,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val settings = userPreferences.userSettingsFlow.first()
             _state.value = _state.value.copy(
                 isServiceRunning = settings.serviceEnabled,
-                isOnboardingComplete = settings.onboardingComplete
+                isOnboardingComplete = settings.onboardingComplete,
+                voiceTriggerEnabled = settings.voiceTriggerEnabled
             )
         }
     }
@@ -256,5 +258,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     // Map functions
     fun updateLocation(location: LatLng) {
         _state.value = _state.value.copy(currentLocation = location)
+    }
+    
+    // Voice trigger functions
+    fun setVoiceTriggerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setVoiceTriggerEnabled(enabled)
+            _state.value = _state.value.copy(voiceTriggerEnabled = enabled)
+        }
     }
 }

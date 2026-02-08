@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.safepulse.domain.model.RiskLevel
 import com.safepulse.domain.model.SafetyMode
+import com.safepulse.ml.StubVoiceTriggerModule
 import com.safepulse.ui.components.LiveMapCard
 import com.safepulse.ui.theme.*
 import com.safepulse.ui.viewmodel.HomeViewModel
@@ -132,28 +133,75 @@ fun HomeScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Stats cards
-            Row(
+            // Voice Trigger section
+            var showVoiceDemoDialog by remember { mutableStateOf(false) }
+            
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
             ) {
-                StatCard(
-                    title = "Events",
-                    value = state.eventCount.toString(),
-                    icon = Icons.Default.Warning,
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "SOS Sent",
-                    value = state.sosCount.toString(),
-                    icon = Icons.Default.Send,
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Contacts",
-                    value = state.emergencyContacts.size.toString(),
-                    icon = Icons.Default.People,
-                    modifier = Modifier.weight(1f)
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        "Voice Trigger",
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PrimaryRed
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = null,
+                            tint = if (state.voiceTriggerEnabled) SafeGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Voice Emergency", fontWeight = FontWeight.Medium)
+                            Text(
+                                "Say \"Help\" or \"Emergency\" to trigger SOS",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        Switch(
+                            checked = state.voiceTriggerEnabled,
+                            onCheckedChange = { viewModel.setVoiceTriggerEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = SafeGreen
+                            )
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Button(
+                        onClick = { showVoiceDemoDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryRed
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Test Voice Trigger (Demo)")
+                    }
+                }
+            }
+            
+            // Voice Demo Dialog
+            if (showVoiceDemoDialog) {
+                VoiceDemoDialog(
+                    onDismiss = { showVoiceDemoDialog = false }
                 )
             }
             
@@ -563,4 +611,72 @@ private fun QuickActionButton(
             Text(text, fontSize = 10.sp)
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VoiceDemoDialog(onDismiss: () -> Unit) {
+    var testInput by remember { mutableStateOf("") }
+    var result by remember { mutableStateOf<String?>(null) }
+    val voiceModule = remember { StubVoiceTriggerModule() }
+    
+    LaunchedEffect(Unit) {
+        voiceModule.startListening()
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Voice Trigger Demo") },
+        text = {
+            Column {
+                Text(
+                    "This simulates voice keyword detection. Type a phrase containing trigger words:",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    "Keywords: \"help\", \"save me\", \"emergency\", \"bachao\"",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PrimaryRed
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = testInput,
+                    onValueChange = { testInput = it },
+                    label = { Text("Enter phrase") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Button(
+                    onClick = {
+                        val detected = voiceModule.processTextInput(testInput)
+                        result = if (detected) "⚠️ KEYWORD DETECTED - SOS would trigger!" else "✓ No keyword detected"
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Test")
+                }
+                
+                result?.let { r ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = r,
+                        fontWeight = FontWeight.Bold,
+                        color = if (r.contains("DETECTED")) DangerRed else SafeGreen
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }

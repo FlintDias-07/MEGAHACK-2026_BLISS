@@ -130,7 +130,6 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var showZonesDialog by remember { mutableStateOf(false) }
-    var showVoiceDemoDialog by remember { mutableStateOf(false) }
     
     Scaffold(
         topBar = {
@@ -323,9 +322,9 @@ fun SettingsScreen(
                 }
             }
             
-            // Voice Trigger section
+            // Statistics section
             item {
-                SectionHeader("Voice Trigger")
+                SectionHeader("Statistics")
             }
             
             item {
@@ -334,44 +333,92 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                Icons.Default.Mic,
+                                Icons.Default.Warning,
                                 contentDescription = null,
-                                tint = if (state.voiceTriggerEnabled) SafeGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                tint = PrimaryRed.copy(alpha = 0.7f)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Voice Emergency", fontWeight = FontWeight.Medium)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Events", fontWeight = FontWeight.Medium)
                                 Text(
-                                    "Say \"Help\" or \"Emergency\" to trigger SOS",
+                                    "Detected safety events",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
-                            Switch(
-                                checked = state.voiceTriggerEnabled,
-                                onCheckedChange = { viewModel.setVoiceTriggerEnabled(it) },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = SafeGreen
-                                )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                "6",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryRed
                             )
                         }
                         
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
                         
-                        TextButton(
-                            onClick = { showVoiceDemoDialog = true },
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Test Voice Trigger (Demo)")
+                            Icon(
+                                Icons.Default.Send,
+                                contentDescription = null,
+                                tint = PrimaryRed.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("SOS Sent", fontWeight = FontWeight.Medium)
+                                Text(
+                                    "Emergency messages sent",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                "6",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryRed
+                            )
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+                        
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.People,
+                                contentDescription = null,
+                                tint = PrimaryRed.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text("Emergency Contacts", fontWeight = FontWeight.Medium)
+                                Text(
+                                    "${state.contacts.size} contacts configured",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                state.contacts.size.toString(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryRed
+                            )
                         }
                     }
                 }
@@ -475,13 +522,6 @@ fun SettingsScreen(
             hotspots = state.hotspots,
             unsafeZones = state.unsafeZones,
             onDismiss = { showZonesDialog = false }
-        )
-    }
-    
-    // Voice Demo Dialog
-    if (showVoiceDemoDialog) {
-        VoiceDemoDialog(
-            onDismiss = { showVoiceDemoDialog = false }
         )
     }
 }

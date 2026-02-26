@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -56,9 +57,6 @@ android {
         compose = true
         buildConfig = true  // Enable BuildConfig generation
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -103,6 +101,9 @@ dependencies {
     
     // Location Services
     implementation("com.google.android.gms:play-services-location:21.1.0")
+    
+    // Wearable Data Layer API (phone <-> watch communication)
+    implementation("com.google.android.gms:play-services-wearable:18.1.0")
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

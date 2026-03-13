@@ -165,7 +165,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Voice Trigger section
-            var showVoiceDemoDialog by remember { mutableStateOf(false) }
             
             Card(
                 modifier = Modifier
@@ -215,28 +214,7 @@ fun HomeScreen(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Button(
-                        onClick = { showVoiceDemoDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryRed
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.extracted_test_voice_trigger_demo))
-                    }
                 }
-            }
-            
-            // Voice Demo Dialog
-            if (showVoiceDemoDialog) {
-                VoiceDemoDialog(
-                    onDismiss = { showVoiceDemoDialog = false }
-                )
             }
             
             Spacer(modifier = Modifier.height(20.dp))
@@ -364,52 +342,6 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                     }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Interactive Map card (full-screen Leaflet map)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onNavigateToFullMap() },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE3F2FD)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Explore,
-                        contentDescription = "Interactive Map",
-                        tint = Color(0xFF1565C0),
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "Interactive Map",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color(0xFF1565C0)
-                        )
-                        Text(
-                            "Add markers, draw routes, explore",
-                            fontSize = 11.sp,
-                            color = Color(0xFF1565C0).copy(alpha = 0.7f)
-                        )
-                    }
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = Color(0xFF1565C0).copy(alpha = 0.5f)
-                    )
                 }
             }
 

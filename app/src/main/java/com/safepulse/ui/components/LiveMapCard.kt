@@ -28,19 +28,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
+import com.safepulse.ui.map.CircleData
+import com.safepulse.ui.map.LeafletMapController
+import com.safepulse.ui.map.LeafletMapView
+import com.safepulse.ui.map.MapUpdateData
+import com.safepulse.ui.map.MarkerData
+import com.safepulse.ui.map.PolylineData
 import com.safepulse.data.db.entity.HotspotEntity
 import com.safepulse.data.repository.DisasterRepository
 import com.safepulse.data.repository.HotspotRepository
+import com.safepulse.data.repository.RiskZoneRepository
 import com.safepulse.data.repository.SafeRoutesRepository
 import com.safepulse.domain.saferoutes.*
 import kotlinx.coroutines.launch
@@ -57,8 +60,7 @@ fun LiveMapCard(
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    var mapView: MapView? by remember { mutableStateOf(null) }
-    var googleMap: GoogleMap? by remember { mutableStateOf(null) }
+    var mapController: LeafletMapController? by remember { mutableStateOf(null) }
     val context = LocalContext.current
 
     // Route planning state
@@ -84,15 +86,26 @@ fun LiveMapCard(
 
     // Update map markers when data changes
     LaunchedEffect(crimeHotspots, disasters, currentLocation, routes, selectedRoute) {
-        googleMap?.let { map ->
-            updateMapContent(
-                map = map,
-                crimeHotspots = crimeHotspots,
-                disasters = disasters,
-                currentLocation = currentLocation,
-                routes = routes,
-                selectedRoute = selectedRoute
-            )
+      mapController?.let { controller ->
+            updateLeafletContent(controller, crimeHotspots, disasters, currentLocation, routes, selectedRoute)
+        }
+    }
+
+    // Load all-India police stations, hospitals, and safe zones on map
+    LaunchedEffect(mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        val repo = RiskZoneRepository(context)
+        val stations = repo.getAllPoliceStations()
+        val hospitals = repo.getAllHospitals()
+        val safeZones = repo.getSafeZonesForMap()
+        if (stations.isNotEmpty()) {
+            ctrl.addPoliceStations(stations)
+        }
+        if (hospitals.isNotEmpty()) {
+            ctrl.addHospitals(hospitals)
+        }
+        if (safeZones.isNotEmpty()) {
+            ctrl.addSafeZones(safeZones)
         }
     }
 
@@ -107,13 +120,16 @@ fun LiveMapCard(
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                MapViewComposable(
-                    onMapReady = { map ->
-                        googleMap = map
-                        setupMap(map, context, currentLocation)
-                        updateMapContent(map, crimeHotspots, disasters, currentLocation, routes, selectedRoute)
+               LeafletMapView(
+                    onMapReady = { controller ->
+                        mapController = controller
+                        currentLocation?.let { loc ->
+                            controller.setCenter(loc.latitude, loc.longitude, 13f)
+                            controller.setCurrentLocation(loc.latitude, loc.longitude)
+                        }
+                        updateLeafletContent(controller, crimeHotspots, disasters, currentLocation, routes, selectedRoute)
                     },
-                    onMapViewCreated = { mapView = it },
+                    
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -182,12 +198,13 @@ fun LiveMapCard(
                                     isSelected = route == selectedRoute,
                                     onClick = {
                                         selectedRoute = route
-                                        googleMap?.let { map ->
-                                            updateMapContent(map, crimeHotspots, disasters, currentLocation, routes, route)
+                                        mapController?.let { controller ->
+                                            updateLeafletContent(controller, crimeHotspots, disasters, currentLocation, routes, route)
                                             // Zoom to route
-                                            val bounds = LatLngBounds.builder()
-                                            PolyUtil.decode(route.polyline).forEach { bounds.include(it) }
-                                            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
+                                            val points = PolyUtil.decode(route.polyline)
+                                            if (points.isNotEmpty()) {
+                                                controller.fitBounds(points)
+                                            }
                                         }
                                     }
                                 )
@@ -269,12 +286,12 @@ fun LiveMapCard(
                                 } else {
                                     android.util.Log.d("LiveMapCard", "Routes: ${routes.joinToString { "${it.distance} - ${it.riskLevel}" }}")
                                     // Zoom to show routes
-                                    googleMap?.let { map ->
-                                        val bounds = LatLngBounds.builder()
-                                        routes.forEach { route ->
-                                            PolyUtil.decode(route.polyline).forEach { bounds.include(it) }
+                                   mapController?.let { controller ->
+                                        val allPoints = routes.flatMap { route -> PolyUtil.decode(route.polyline) }
+                                        if (allPoints.isNotEmpty()) {
+                                            controller.fitBounds(allPoints)
                                         }
-                                        map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
+                                       
                                     }
                                 }
                             } catch (e: Exception) {
@@ -299,7 +316,7 @@ fun LiveMapCard(
                     android.util.Log.d("LiveMapCard", "TEST MODE: Created ${mockRoutes.size} mock routes")
 
                     // Zoom to destination
-                    googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(destination, 13f))
+                   mapController?.animateTo(destination.latitude, destination.longitude,  -13f)
                 }
             )
         }
@@ -315,13 +332,16 @@ fun LiveMapCard(
     ) {
         Box {
             if (hasLocationPermission) {
-                MapViewComposable(
-                    onMapReady = { map ->
-                        googleMap = map
-                        setupMap(map, context, currentLocation)
-                        updateMapContent(map, crimeHotspots, disasters, currentLocation, emptyList(), null)
+                LeafletMapView(
+                    onMapReady = { controller ->
+                        mapController = controller
+                        currentLocation?.let { loc ->
+                            controller.setCenter(loc.latitude, loc.longitude, 13f)
+                            controller.setCurrentLocation(loc.latitude, loc.longitude)
+                        }
+                        updateLeafletContent(controller, crimeHotspots, disasters, currentLocation, emptyList(), null)
                     },
-                    onMapViewCreated = { mapView = it },
+                   
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
@@ -381,9 +401,8 @@ fun LiveMapCard(
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            mapView?.onDestroy()
-        }
+        onDispose { }
+      
     }
 }
 
@@ -635,118 +654,72 @@ fun RiskBadge(riskLevel: RiskLevel) {
     }
 }
 
-@Composable
-fun MapViewComposable(
-    onMapReady: (GoogleMap) -> Unit,
-    onMapViewCreated: (MapView) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    AndroidView(
-        factory = { ctx ->
-            MapView(ctx).apply {
-                onCreate(null)
-                onResume()
-                onMapViewCreated(this)
-                getMapAsync { map ->
-                    onMapReady(map)
-                }
-            }
-        },
-        modifier = modifier
-    )
-}
-
-@SuppressLint("MissingPermission")
-fun setupMap(
-    map: GoogleMap,
-    context: Context,
-    currentLocation: com.google.android.gms.maps.model.LatLng?
-) {
-    map.uiSettings.apply {
-        isZoomControlsEnabled = false
-        isMyLocationButtonEnabled = false
-        isCompassEnabled = true
-        isMapToolbarEnabled = false
-    }
-
-    if (ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        map.isMyLocationEnabled = true
-    }
-
-    currentLocation?.let {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(it, 13f))
-    }
-}
-
-fun updateMapContent(
-    map: GoogleMap,
+fun updateLeafletContent(
+    controller: LeafletMapController,
     crimeHotspots: List<HotspotEntity>,
     disasters: List<DisasterAlert>,
     currentLocation: com.google.android.gms.maps.model.LatLng?,
     routes: List<SafeRoute>,
     selectedRoute: SafeRoute?
 ) {
-    map.clear()
+    val markers = mutableListOf<MarkerData>()
+    val circles = mutableListOf<CircleData>()
+    val polylines = mutableListOf<PolylineData>()
 
-    // Draw routes first (so they appear under markers)
-    routes.forEachIndexed { index, route ->
+    // Routes (drawn first so they appear under markers)
+    routes.forEach { route ->
         val points = PolyUtil.decode(route.polyline)
-        val isSelected = route == selectedRoute
-        val color = when {
-            isSelected -> android.graphics.Color.parseColor("#2196F3") // Blue for selected
-            route.riskLevel == RiskLevel.LOW -> android.graphics.Color.parseColor("#4CAF50")
-            route.riskLevel == RiskLevel.MEDIUM -> android.graphics.Color.parseColor("#FF9800")
-            else -> android.graphics.Color.parseColor("#F44336")
+        val isSelected = selectedRoute == route
+        val color = when (route.riskLevel) {
+            RiskLevel.LOW -> "#4CAF50"
+            RiskLevel.MEDIUM -> "#FF9800"
+            RiskLevel.HIGH -> "#F44336"
         }
 
-        map.addPolyline(
-            PolylineOptions()
-                .addAll(points)
-                .color(color)
-                .width(if (isSelected) 12f else 8f)
-                .zIndex(if (isSelected) 2f else 1f)
-        )
+        polylines.add(PolylineData(
+            points = points,
+            color = color,
+            weight = if (isSelected) 6 else 4
+        ))
     }
 
     // Add crime hotspot markers
     crimeHotspots.forEach { hotspot ->
-        map.addMarker(
-            MarkerOptions()
-                .position(com.google.android.gms.maps.model.LatLng(hotspot.lat, hotspot.lng))
-                .title("Crime Hotspot")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-        )
+          markers.add(MarkerData(hotspot.lat, hotspot.lng, "Crime Hotspot", color = "#F44336"))
     }
 
     // Add disaster zones as circles
     disasters.forEach { disaster ->
         val color = when (disaster.severity) {
-            Severity.LOW -> android.graphics.Color.parseColor("#FFEB3B")
-            Severity.MODERATE -> android.graphics.Color.parseColor("#FF9800")
-            Severity.HIGH, Severity.CRITICAL -> android.graphics.Color.parseColor("#F44336")
+            Severity.LOW -> "#FFEB3B"
+            Severity.MODERATE -> "#FF9800"
+            Severity.HIGH, Severity.CRITICAL -> "#F44336"
         }
 
-        map.addCircle(
-            CircleOptions()
-                .center(disaster.location)
-                .radius(disaster.radius * 1000.0)
-                .strokeColor(color)
-                .strokeWidth(3f)
-                .fillColor(color and 0x30FFFFFF.toInt())
-        )
-
-        map.addMarker(
-            MarkerOptions()
-                .position(disaster.location)
-                .title("${disaster.type.name} Alert")
-                .snippet(disaster.description)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
-        )
+        circles.add(CircleData(
+            lat = disaster.location.latitude,
+            lng = disaster.location.longitude,
+            radius = disaster.radius * 1000.0,
+            fillColor = color,
+            strokeColor = color
+        ))
+        markers.add(MarkerData(
+            disaster.location.latitude,
+            disaster.location.longitude,
+            "${disaster.type.name} Alert",
+            snippet = disaster.description,
+            color = "#FF9800"
+        ))
     }
+
+    controller.batchUpdate(MapUpdateData(
+        clear = true,
+        currentLocation = currentLocation?.let { it.latitude to it.longitude },
+        markers = markers,
+        circles = circles,
+        polylines = polylines,
+        fitToLayers = routes.isEmpty() && markers.isNotEmpty()
+    ))
 }
 
 @SuppressLint("MissingPermission")

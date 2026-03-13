@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import com.safepulse.data.repository.RiskZoneRepository
 import com.safepulse.domain.riskmap.*
+import com.safepulse.ui.map.CrimeZoneData
+import com.safepulse.ui.map.HospitalData
+import com.safepulse.ui.map.PoliceStationData
+import com.safepulse.ui.map.SafeZoneData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,17 +44,40 @@ class RiskMapViewModel(
     private val _showSafetyPlaces = MutableStateFlow(true)
     val showSafetyPlaces: StateFlow<Boolean> = _showSafetyPlaces.asStateFlow()
 
+    private val _policeStations = MutableStateFlow<List<PoliceStationData>>(emptyList())
+    val policeStations: StateFlow<List<PoliceStationData>> = _policeStations.asStateFlow()
+
+    private val _hospitals = MutableStateFlow<List<HospitalData>>(emptyList())
+    val hospitals: StateFlow<List<HospitalData>> = _hospitals.asStateFlow()
+
+    private val _safeZones = MutableStateFlow<List<SafeZoneData>>(emptyList())
+    val safeZones: StateFlow<List<SafeZoneData>> = _safeZones.asStateFlow()
+
+    private val _crimeZonesForMap = MutableStateFlow<List<CrimeZoneData>>(emptyList())
+    val crimeZonesForMap: StateFlow<List<CrimeZoneData>> = _crimeZonesForMap.asStateFlow()
+
+    private var allIndiaDataLoaded = false
+
     fun loadRiskData() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val data = riskZoneRepository.loadAllRiskData()
                 _uiState.value = RiskMapUiState.Success(data)
+                // Load crime zones for safe routing in JS
+                _crimeZonesForMap.value = riskZoneRepository.getCrimeZonesForMap()
                 // Load safety places (limited to nearby when location available)
                 val loc = _currentLocation.value
                 _safetyPlaces.value = if (loc != null) {
                     riskZoneRepository.getSafetyPlacesNear(loc, 30.0)
                 } else {
                     riskZoneRepository.getSafetyPlacesNear(LatLng(28.6139, 77.2090), 30.0)
+                }
+                // Load all-India data once for map layers
+                if (!allIndiaDataLoaded) {
+                    allIndiaDataLoaded = true
+                    _policeStations.value = riskZoneRepository.getAllPoliceStations()
+                    _hospitals.value = riskZoneRepository.getAllHospitals()
+                    _safeZones.value = riskZoneRepository.getSafeZonesForMap()
                 }
             } catch (e: Exception) {
                 _uiState.value = RiskMapUiState.Error(e.message ?: "Failed to load risk data")
@@ -87,6 +114,8 @@ class RiskMapViewModel(
 
             // Refresh nearby safety places for the new location
             _safetyPlaces.value = riskZoneRepository.getSafetyPlacesNear(location, 30.0)
+            // Refresh police stations for map layer
+            _policeStations.value = riskZoneRepository.getPoliceStationsNear(location, 50.0)
         }
     }
 

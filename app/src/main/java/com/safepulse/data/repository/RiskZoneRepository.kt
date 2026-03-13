@@ -5,6 +5,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.safepulse.domain.riskmap.*
+import com.safepulse.ui.map.CrimeZoneData
+import com.safepulse.ui.map.HospitalData
+import com.safepulse.ui.map.PoliceStationData
+import com.safepulse.ui.map.SafeZoneData
 import kotlin.math.*
 
 /**
@@ -344,6 +348,77 @@ class RiskZoneRepository(private val context: Context) {
         }
     }
 
+/**
+     * Get police stations near a location as PoliceStationData for the map layer
+     */
+    fun getPoliceStationsNear(location: LatLng, maxDistanceKm: Double = 30.0): List<PoliceStationData> {
+        return loadSafetyPlaces()
+            .filter { it.type == SafetyPlaceType.POLICE }
+            .filter { distanceKm(location, it.location) <= maxDistanceKm }
+            .sortedBy { distanceKm(location, it.location) }
+            .map { PoliceStationData(it.location.latitude, it.location.longitude, it.name) }
+    }
+
+    /**
+     * Get ALL police stations across India for map display
+     */
+    fun getAllPoliceStations(): List<PoliceStationData> {
+        return loadSafetyPlaces()
+            .filter { it.type == SafetyPlaceType.POLICE }
+            .map { PoliceStationData(it.location.latitude, it.location.longitude, it.name) }
+    }
+
+    /**
+     * Get ALL hospitals across India for map display
+     */
+    fun getAllHospitals(): List<HospitalData> {
+        return loadSafetyPlaces()
+            .filter { it.type == SafetyPlaceType.HOSPITAL }
+            .map { HospitalData(it.location.latitude, it.location.longitude, it.name) }
+    }
+
+    /**
+     * Get hospitals near a location for map display
+     */
+    fun getHospitalsNear(location: LatLng, maxDistanceKm: Double = 50.0): List<HospitalData> {
+        return loadSafetyPlaces()
+            .filter { it.type == SafetyPlaceType.HOSPITAL }
+            .filter { distanceKm(location, it.location) <= maxDistanceKm }
+            .sortedBy { distanceKm(location, it.location) }
+            .map { HospitalData(it.location.latitude, it.location.longitude, it.name) }
+    }
+
+    /**
+     * Get safe zones (low crime areas) for map display across all India
+     */
+    fun getSafeZonesForMap(): List<SafeZoneData> {
+        return loadCrimeRiskZones()
+            .filter { it.crimeRiskScore < 0.3f }
+            .map { zone ->
+                SafeZoneData(
+                    lat = zone.location.latitude,
+                    lng = zone.location.longitude,
+                    name = "${zone.city} Safe Area",
+                    state = zone.state,
+                    radiusMeters = zone.radiusMeters.toDouble()
+                )
+            }
+    }
+
+    /**
+     * Get crime zones formatted for the map's safe-route scoring
+     */
+    fun getCrimeZonesForMap(): List<CrimeZoneData> {
+        return loadCrimeRiskZones().map { zone ->
+            CrimeZoneData(
+                lat = zone.location.latitude,
+                lng = zone.location.longitude,
+                radiusMeters = zone.radiusMeters.toDouble(),
+                crimeRiskScore = zone.crimeRiskScore
+            )
+        }
+    }
+    
     companion object {
         fun distanceMeters(p1: LatLng, p2: LatLng): Float {
             val earthRadius = 6371000.0

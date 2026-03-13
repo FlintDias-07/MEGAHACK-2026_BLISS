@@ -1,9 +1,5 @@
 package com.safepulse.ui.riskmap
 
-import androidx.compose.ui.res.stringResource
-import com.safepulse.R
-
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -31,18 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
 import com.safepulse.domain.riskmap.*
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Typeface
+import com.safepulse.ui.map.*
 
 // Risk level colors
 private val HighRiskColor = Color(0xFFF44336)
@@ -71,9 +60,12 @@ fun RiskMapScreen(
     val destination by viewModel.destination.collectAsState()
     val safetyPlaces by viewModel.safetyPlaces.collectAsState()
     val showSafetyPlaces by viewModel.showSafetyPlaces.collectAsState()
+    val policeStations by viewModel.policeStations.collectAsState()
+    val hospitals by viewModel.hospitals.collectAsState()
+    val safeZones by viewModel.safeZones.collectAsState()
+    val crimeZonesForMap by viewModel.crimeZonesForMap.collectAsState()
 
-    var googleMap by remember { mutableStateOf<GoogleMap?>(null) }
-    var mapView by remember { mutableStateOf<MapView?>(null) }
+    var mapController by remember { mutableStateOf<LeafletMapController?>(null) }
     var showDestinationDialog by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(true) }
     var hasLocationPermission by remember {
@@ -90,7 +82,7 @@ fun RiskMapScreen(
         if (granted) {
             fetchCurrentLocation(context) { loc ->
                 viewModel.updateCurrentLocation(loc)
-                googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 12f))
+                mapController?.animateTo(loc, 12f)
             }
         }
     }
@@ -107,14 +99,40 @@ fun RiskMapScreen(
     }
 
     // Update map overlays when data or filter changes
-    LaunchedEffect(uiState, selectedFilter, safeRoutes, destination, showSafetyPlaces, safetyPlaces) {
-        val map = googleMap ?: return@LaunchedEffect
+    LaunchedEffect(uiState, selectedFilter, safeRoutes, destination, showSafetyPlaces, safetyPlaces, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
         val state = uiState as? RiskMapUiState.Success ?: return@LaunchedEffect
         drawRiskOverlays(
-            map, state.riskData, selectedFilter, safeRoutes,
+            ctrl, state.riskData, selectedFilter, safeRoutes,
             currentLocation, destination,
-            if (showSafetyPlaces) safetyPlaces else emptyList()
+            if (showSafetyPlaces) safetyPlaces else emptyList(),
+            crimeZonesForMap
         )
+    }
+
+    // Load police stations as a persistent layer
+    // Load all-India police stations as persistent layer
+    LaunchedEffect(policeStations, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (policeStations.isNotEmpty()) {
+            ctrl.addPoliceStations(policeStations)
+        }
+    }
+
+    // Load all-India hospitals as persistent layer
+    LaunchedEffect(hospitals, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (hospitals.isNotEmpty()) {
+            ctrl.addHospitals(hospitals)
+        }
+    }
+
+    // Load all-India safe zones as persistent layer
+    LaunchedEffect(safeZones, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (safeZones.isNotEmpty()) {
+            ctrl.addSafeZones(safeZones)
+        }
     }
 
     Scaffold(
@@ -122,7 +140,7 @@ fun RiskMapScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.extracted_risk_map), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Risk Map", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         locationRisk?.let { risk ->
                             Text(
                                 text = "Risk Level: ${risk.riskLevel}",
@@ -173,7 +191,7 @@ fun RiskMapScreen(
                 FloatingActionButton(
                     onClick = {
                         currentLocation?.let { loc ->
-                            googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 14f))
+                            mapController?.animateTo(loc, 14f)
                         }
                     }
                 ) {
@@ -189,22 +207,15 @@ fun RiskMapScreen(
         ) {
             // Map
             if (hasLocationPermission) {
-                AndroidView(
-                    factory = { ctx ->
-                        MapView(ctx).apply {
-                            onCreate(null)
-                            onResume()
-                            mapView = this
-                            getMapAsync { map ->
-                                googleMap = map
-                                setupRiskMap(map, ctx, currentLocation)
-                                currentLocation?.let {
-                                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 12f))
-                                }
-                            }
+                LeafletMapView(
+                    modifier = Modifier.fillMaxSize(),
+                    onMapReady = { ctrl ->
+                        mapController = ctrl
+                        currentLocation?.let {
+                            ctrl.setCenter(it.latitude, it.longitude, 12f)
+                            ctrl.setCurrentLocation(it)
                         }
-                    },
-                    modifier = Modifier.fillMaxSize()
+                    }
                 )
             } else {
                 Box(
@@ -216,11 +227,11 @@ fun RiskMapScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.LocationOff, null, modifier = Modifier.size(48.dp))
                         Spacer(Modifier.height(8.dp))
-                        Text(stringResource(R.string.extracted_location_permission_required))
+                        Text("Location permission required")
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = {
                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                        }) { Text(stringResource(R.string.extracted_grant_permission)) }
+                        }) { Text("Grant Permission") }
                     }
                 }
             }
@@ -248,12 +259,8 @@ fun RiskMapScreen(
                     locationRisk = locationRisk,
                     safeRoutes = safeRoutes,
                     onRouteSelect = { route ->
-                        googleMap?.let { map ->
-                            if (route.waypoints.isNotEmpty()) {
-                                val bounds = LatLngBounds.builder()
-                                route.waypoints.forEach { bounds.include(it) }
-                                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
-                            }
+                        if (route.waypoints.isNotEmpty()) {
+                            mapController?.fitBounds(route.waypoints)
                         }
                     }
                 )
@@ -281,7 +288,7 @@ fun RiskMapScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose { mapView?.onDestroy() }
+        onDispose { /* Leaflet WebView cleaned up by Compose */ }
     }
 }
 
@@ -326,7 +333,7 @@ private fun MapLegend(modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            Text(stringResource(R.string.extracted_legend), fontWeight = FontWeight.Bold, fontSize = 10.sp)
+            Text("Legend", fontWeight = FontWeight.Bold, fontSize = 10.sp)
             LegendItem(HighRiskColor, "High Crime Risk")
             LegendItem(MediumRiskColor, "Medium Crime Risk")
             LegendItem(LowRiskColor, "Low Crime Risk")
@@ -378,7 +385,7 @@ private fun RiskInfoPanel(
         ) {
             // Location risk summary
             locationRisk?.let { risk ->
-                Text(stringResource(R.string.extracted_your_area_risk_analysis), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("📍 Your Area Risk Analysis", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(Modifier.height(8.dp))
 
                 Row(
@@ -399,7 +406,7 @@ private fun RiskInfoPanel(
                 // Nearby zones
                 if (risk.nearbyCrimeZones.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.extracted_nearby_crime_zones), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Text("Nearby Crime Zones:", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                     risk.nearbyCrimeZones.take(3).forEach { zone ->
                         Text(
                             "• ${zone.city}: ${zone.totalCrimes} crimes (${(zone.crimeRiskScore * 100).toInt()}% risk)",
@@ -411,7 +418,7 @@ private fun RiskInfoPanel(
 
                 if (risk.nearbyDisasterZones.isNotEmpty()) {
                     Spacer(Modifier.height(4.dp))
-                    Text(stringResource(R.string.extracted_nearby_disaster_zones), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Text("Nearby Disaster Zones:", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                     risk.nearbyDisasterZones.take(3).forEach { zone ->
                         val factors = zone.riskFactors.take(2).joinToString(", ")
                         Text(
@@ -423,17 +430,18 @@ private fun RiskInfoPanel(
                 }
             }
 
-            // Safe routes section
+            // Safe route section — show only the safest
             if (safeRoutes.isNotEmpty()) {
+                val safest = safeRoutes.firstOrNull { it.isSafest }
+                    ?: safeRoutes.minByOrNull { it.totalRiskScore }
                 Spacer(Modifier.height(12.dp))
                 Divider()
                 Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.extracted_safe_route_suggestions), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("🛣️ Safest Route", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Spacer(Modifier.height(8.dp))
 
-                safeRoutes.forEach { route ->
+                safest?.let { route ->
                     SafeRouteCard(route = route, onClick = { onRouteSelect(route) })
-                    Spacer(Modifier.height(6.dp))
                 }
             }
         }
@@ -554,11 +562,11 @@ private fun DestinationInputDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.extracted_find_safe_route), fontWeight = FontWeight.Bold) },
+        title = { Text("🛣️ Find Safe Route", fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 Text(
-                    stringResource(R.string.extracted_select_a_destination_to_get_the_safest_route_based_on_crime_and_disaster_data),
+                    "Select a destination to get the safest route based on crime and disaster data:",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -615,284 +623,144 @@ private fun DestinationInputDialog(
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.extracted_nearby_2km_away_1), fontSize = 13.sp)
+                            Text("📍 Nearby (~2km away)", fontSize = 13.sp)
                         }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
 }
 
-// --- Map setup helpers ---
-
-@SuppressLint("MissingPermission")
-private fun setupRiskMap(
-    map: GoogleMap,
-    context: android.content.Context,
-    currentLocation: LatLng?
-) {
-    map.uiSettings.apply {
-        isZoomControlsEnabled = true
-        isMyLocationButtonEnabled = false
-        isCompassEnabled = true
-        isMapToolbarEnabled = false
-    }
-
-    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-        == PackageManager.PERMISSION_GRANTED
-    ) {
-        map.isMyLocationEnabled = true
-    }
-
-    map.setMapStyle(
-        MapStyleOptions("[{\"featureType\":\"poi\",\"stylers\":[{\"visibility\":\"off\"}]}]")
-    )
-
-    // Default to India view
-    val indiaCenter = currentLocation ?: LatLng(20.5937, 78.9629)
-    val zoom = if (currentLocation != null) 12f else 5f
-    map.moveCamera(CameraUpdateFactory.newLatLngZoom(indiaCenter, zoom))
-}
+// --- Leaflet map update helpers ---
 
 private fun drawRiskOverlays(
-    map: GoogleMap,
+    ctrl: LeafletMapController,
     riskData: CombinedRiskData,
     filter: RiskFilter,
     safeRoutes: List<SafeRouteOption>,
     currentLocation: LatLng?,
     destination: LatLng?,
-    safetyPlaces: List<SafetyPlace> = emptyList()
+    safetyPlaces: List<SafetyPlace> = emptyList(),
+    crimeZonesForMap: List<CrimeZoneData> = emptyList()
 ) {
-    map.clear()
+    val circles = mutableListOf<CircleData>()
+    val markers = mutableListOf<MarkerData>()
+    val polylines = mutableListOf<PolylineData>()
+    val boundsPoints = mutableListOf<LatLng>()
 
-    // Draw crime risk circles
+    // Crime risk circles & hotspot markers
     if (filter == RiskFilter.ALL || filter == RiskFilter.CRIME_ONLY) {
         for (zone in riskData.crimeZones) {
-            val color = when {
-                zone.crimeRiskScore >= 0.5f -> 0x40F44336.toInt() // Red
-                zone.crimeRiskScore >= 0.2f -> 0x40FF9800.toInt() // Orange
-                else -> 0x404CAF50.toInt() // Green
+            val (fill, stroke) = when {
+                zone.crimeRiskScore >= 0.5f -> "#F44336" to "#F44336"
+                zone.crimeRiskScore >= 0.2f -> "#FF9800" to "#FF9800"
+                else -> "#4CAF50" to "#4CAF50"
             }
-            val strokeColor = when {
-                zone.crimeRiskScore >= 0.5f -> 0x80F44336.toInt()
-                zone.crimeRiskScore >= 0.2f -> 0x80FF9800.toInt()
-                else -> 0x804CAF50.toInt()
-            }
-
-            map.addCircle(
-                CircleOptions()
-                    .center(zone.location)
-                    .radius(zone.radiusMeters.toDouble())
-                    .fillColor(color)
-                    .strokeColor(strokeColor)
-                    .strokeWidth(2f)
-            )
-
-            // Add crime hotspot markers
+            circles.add(CircleData(
+                zone.location.latitude, zone.location.longitude,
+                zone.radiusMeters.toDouble(), fill, stroke, 0.25, 0.5
+            ))
             for (hotspot in zone.hotspots) {
-                val hue = when {
-                    hotspot.risk >= 0.7f -> BitmapDescriptorFactory.HUE_RED
-                    hotspot.risk >= 0.4f -> BitmapDescriptorFactory.HUE_ORANGE
-                    else -> BitmapDescriptorFactory.HUE_GREEN
+                val color = when {
+                    hotspot.risk >= 0.7f -> "#F44336"
+                    hotspot.risk >= 0.4f -> "#FF9800"
+                    else -> "#4CAF50"
                 }
-                map.addMarker(
-                    MarkerOptions()
-                        .position(hotspot.location)
-                        .title("🔴 ${hotspot.label}")
-                        .snippet("Crime Risk: ${(hotspot.risk * 100).toInt()}% | ${zone.city}")
-                        .icon(BitmapDescriptorFactory.defaultMarker(hue))
-                        .alpha(0.85f)
-                )
+                markers.add(MarkerData(
+                    hotspot.location.latitude, hotspot.location.longitude,
+                    "\uD83D\uDD34 ${hotspot.label}",
+                    "Crime Risk: ${(hotspot.risk * 100).toInt()}% | ${zone.city}",
+                    color
+                ))
             }
         }
     }
 
-    // Draw disaster risk circles
+    // Disaster risk circles & markers
     if (filter == RiskFilter.ALL || filter == RiskFilter.DISASTER_ONLY) {
         for (zone in riskData.disasterZones) {
-            // Flood risk circle
             if (zone.floodRisk >= 0.4f) {
-                map.addCircle(
-                    CircleOptions()
-                        .center(zone.location)
-                        .radius(zone.radiusMeters.toDouble() * 0.8)
-                        .fillColor(0x302196F3)
-                        .strokeColor(0x602196F3)
-                        .strokeWidth(1.5f)
-                )
+                circles.add(CircleData(
+                    zone.location.latitude, zone.location.longitude,
+                    zone.radiusMeters.toDouble() * 0.8, "#2196F3", "#2196F3", 0.2, 0.4
+                ))
             }
-
-            // Landslide risk circle
             if (zone.landslideRisk >= 0.4f) {
-                map.addCircle(
-                    CircleOptions()
-                        .center(zone.location)
-                        .radius(zone.radiusMeters.toDouble() * 0.6)
-                        .fillColor(0x30795548)
-                        .strokeColor(0x60795548)
-                        .strokeWidth(1.5f)
-                )
+                circles.add(CircleData(
+                    zone.location.latitude, zone.location.longitude,
+                    zone.radiusMeters.toDouble() * 0.6, "#795548", "#795548", 0.2, 0.4
+                ))
             }
-
-            // Disaster marker
             if (zone.combinedDisasterRisk >= 0.4f) {
-                val icon = when {
-                    zone.floodRisk > zone.landslideRisk -> BitmapDescriptorFactory.HUE_AZURE
-                    else -> BitmapDescriptorFactory.HUE_YELLOW
-                }
                 val typeLabel = when {
-                    zone.floodRisk >= 0.5f && zone.landslideRisk >= 0.5f -> "🌊⛰️ Multi-hazard"
-                    zone.floodRisk >= 0.5f -> "🌊 Flood Risk"
-                    zone.landslideRisk >= 0.5f -> "⛰️ Landslide Risk"
-                    else -> "⚠️ Disaster Risk"
+                    zone.floodRisk >= 0.5f && zone.landslideRisk >= 0.5f -> "\uD83C\uDF0A\u26F0\uFE0F Multi-hazard"
+                    zone.floodRisk >= 0.5f -> "\uD83C\uDF0A Flood Risk"
+                    zone.landslideRisk >= 0.5f -> "\u26F0\uFE0F Landslide Risk"
+                    else -> "\u26A0\uFE0F Disaster Risk"
                 }
-                map.addMarker(
-                    MarkerOptions()
-                        .position(zone.location)
-                        .title("$typeLabel - ${zone.city}")
-                        .snippet(zone.riskFactors.take(2).joinToString(" • "))
-                        .icon(BitmapDescriptorFactory.defaultMarker(icon))
-                        .alpha(0.8f)
-                )
+                val bgColor = if (zone.floodRisk > zone.landslideRisk) "#2196F3" else "#795548"
+                markers.add(MarkerData(
+                    zone.location.latitude, zone.location.longitude,
+                    "$typeLabel - ${zone.city}",
+                    zone.riskFactors.take(2).joinToString(" \u2022 "),
+                    bgColor
+                ))
             }
         }
     }
 
-    // Draw safe routes
-    if (safeRoutes.isNotEmpty()) {
-        safeRoutes.forEachIndexed { index, route ->
-            val color = when {
-                route.isSafest -> 0xFF4CAF50.toInt()
-                route.totalRiskScore < 0.5f -> 0xFFFF9800.toInt()
-                else -> 0xFFF44336.toInt()
-            }
-            map.addPolyline(
-                PolylineOptions()
-                    .addAll(route.waypoints)
-                    .color(color)
-                    .width(if (route.isSafest) 12f else 8f)
-                    .zIndex(if (route.isSafest) 2f else 1f)
-                    .pattern(if (route.isSafest) null else listOf(Dash(20f), Gap(10f)))
-            )
+    // Safe route — pick only the safest one, draw via OSRM after batchUpdate
+    val safestRoute = if (safeRoutes.isNotEmpty()) {
+        val best = safeRoutes.firstOrNull { it.isSafest }
+            ?: safeRoutes.minByOrNull { it.totalRiskScore }
+        best?.let { route ->
+            boundsPoints.addAll(route.waypoints)
         }
-
-        // Destination marker
         destination?.let {
-            map.addMarker(
-                MarkerOptions()
-                    .position(it)
-                    .title("🎯 Destination")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
-            )
+            markers.add(MarkerData(it.latitude, it.longitude, "\uD83C\uDFAF Destination", "", "#9C27B0"))
         }
+        best
+    } else null
 
-        // Zoom to fit all routes
-        val bounds = LatLngBounds.builder()
-        safeRoutes.flatMap { it.waypoints }.forEach { bounds.include(it) }
-        currentLocation?.let { bounds.include(it) }
-        try {
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
-        } catch (_: Exception) {}
-    }
-
-    // Draw police stations and hospitals with distinct custom icons
+    // Safety places
     for (place in safetyPlaces) {
-        val icon = when (place.type) {
-            SafetyPlaceType.POLICE -> createPoliceMarkerIcon()
-            SafetyPlaceType.HOSPITAL -> createHospitalMarkerIcon()
-        }
-        val emoji = when (place.type) {
-            SafetyPlaceType.POLICE -> "🚔"
-            SafetyPlaceType.HOSPITAL -> "🏥"
+        val (emoji, bgColor) = when (place.type) {
+            SafetyPlaceType.POLICE -> "\uD83D\uDE94" to "#1565C0"
+            SafetyPlaceType.HOSPITAL -> "\uD83C\uDFE5" to "#D32F2F"
         }
         val snippet = if (place.address.isNotEmpty() && place.phoneNumber.isNotEmpty())
-            "${place.address} • ${place.phoneNumber}"
+            "${place.address} \u2022 ${place.phoneNumber}"
         else if (place.address.isNotEmpty()) place.address
-        else "Police Station"
-        map.addMarker(
-            MarkerOptions()
-                .position(place.location)
-                .title("$emoji ${place.name}")
-                .snippet(snippet)
-                .icon(icon)
-                .anchor(0.5f, 0.5f)
-                .alpha(0.95f)
-                .zIndex(3f)
-        )
+        else ""
+        markers.add(MarkerData(
+            place.location.latitude, place.location.longitude,
+            "$emoji ${place.name}", snippet, bgColor, emoji, bgColor
+        ))
     }
-}
 
-/**
- * Creates a blue shield-shaped marker icon for police stations
- */
-private fun createPoliceMarkerIcon(): BitmapDescriptor {
-    val size = 48
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
+    currentLocation?.let { boundsPoints.add(it) }
 
-    // Blue filled shield/badge shape
-    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF1565C0.toInt() // Dark blue
-        style = Paint.Style.FILL
+    ctrl.batchUpdate(MapUpdateData(
+        clear = true,
+        currentLocation = currentLocation?.let { it.latitude to it.longitude },
+        markers = markers,
+        circles = circles,
+        polylines = polylines,
+        fitBoundsPoints = if (boundsPoints.size >= 2) boundsPoints else null
+    ))
+
+    // Draw only the safest route using OSRM with crime zone analysis
+    safestRoute?.let { route ->
+        if (route.waypoints.size >= 2) {
+            val start = route.waypoints.first()
+            val end = route.waypoints.last()
+            ctrl.drawSafeRoute(start, end, crimeZonesForMap)
+        }
     }
-    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        style = Paint.Style.STROKE
-        strokeWidth = 3f
-    }
-    // Draw a shield-like rounded rect
-    val rect = android.graphics.RectF(4f, 2f, 44f, 42f)
-    canvas.drawRoundRect(rect, 8f, 8f, bgPaint)
-    canvas.drawRoundRect(rect, 8f, 8f, borderPaint)
-
-    // Draw "P" text in white
-    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        textSize = 28f
-        typeface = Typeface.DEFAULT_BOLD
-        textAlign = Paint.Align.CENTER
-    }
-    canvas.drawText("P", size / 2f, size / 2f + 9f, textPaint)
-
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
-}
-
-/**
- * Creates a red cross marker icon for hospitals
- */
-private fun createHospitalMarkerIcon(): BitmapDescriptor {
-    val size = 48
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-
-    // White circle background
-    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        style = Paint.Style.FILL
-    }
-    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFD32F2F.toInt() // Dark red
-        style = Paint.Style.STROKE
-        strokeWidth = 3f
-    }
-    canvas.drawCircle(size / 2f, size / 2f, 20f, bgPaint)
-    canvas.drawCircle(size / 2f, size / 2f, 20f, borderPaint)
-
-    // Draw red cross
-    val crossPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFD32F2F.toInt()
-        style = Paint.Style.FILL
-    }
-    // Vertical bar of cross
-    canvas.drawRect(20f, 10f, 28f, 38f, crossPaint)
-    // Horizontal bar of cross
-    canvas.drawRect(10f, 20f, 38f, 28f, crossPaint)
-
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
 
 @SuppressLint("MissingPermission")
@@ -905,7 +773,6 @@ private fun fetchCurrentLocation(
         location?.let {
             onLocation(LatLng(it.latitude, it.longitude))
         } ?: run {
-            // Default to Delhi if location unavailable
             onLocation(LatLng(28.6139, 77.2090))
         }
     }.addOnFailureListener {

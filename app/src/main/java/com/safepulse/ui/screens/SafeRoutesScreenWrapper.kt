@@ -35,7 +35,7 @@ fun SafeRoutesScreenWrapper(
     
     // Create ViewModel with factory
     val viewModel: SafeRoutesViewModel = viewModel(
-        factory = SafeRoutesViewModelFactory(safeRoutesRepository, vehicleRecommender)
+        factory = SafeRoutesViewModelFactory(safeRoutesRepository, vehicleRecommender, riskZoneRepository)
     )
     
     // Load nearby safety places (police stations + hospitals) for the map

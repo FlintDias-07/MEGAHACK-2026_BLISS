@@ -1,9 +1,5 @@
 package com.safepulse.ui.saferoutes
 
-import androidx.compose.ui.res.stringResource
-import com.safepulse.R
-
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -11,8 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -24,26 +18,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.PolyUtil
 import com.safepulse.domain.riskmap.SafetyPlace
 import com.safepulse.domain.riskmap.SafetyPlaceType
 import com.safepulse.domain.saferoutes.*
 import com.safepulse.ui.components.DestinationSearchDialogNew
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Typeface
+import com.safepulse.ui.map.*
 import kotlinx.coroutines.launch
 
 /**
- * Safe Routes screen with Google Maps integration
+ * Safe Routes screen with Leaflet map integration
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +44,13 @@ fun SafeRoutesScreenWithMap(
     val uiState by viewModel.uiState.collectAsState()
     val currentLocation by viewModel.currentLocation.collectAsState()
     val selectedRoute by viewModel.selectedRoute.collectAsState()
+    val policeStations by viewModel.policeStations.collectAsState()
+    val hospitals by viewModel.hospitals.collectAsState()
+    val safeZones by viewModel.safeZones.collectAsState()
+    val crimeZonesForMap by viewModel.crimeZonesForMap.collectAsState()
+    val destination by viewModel.destination.collectAsState()
     
-    var mapView: MapView? by remember { mutableStateOf(null) }
-    var googleMap: GoogleMap? by remember { mutableStateOf(null) }
+    var mapController by remember { mutableStateOf<LeafletMapController?>(null) }
     var showSearchDialog by remember { mutableStateOf(false) }
     var hasLocationPermission by remember { 
         mutableStateOf(
@@ -77,9 +68,7 @@ fun SafeRoutesScreenWithMap(
         if (isGranted) {
             getCurrentLocation(context) { location ->
                 viewModel.updateCurrentLocation(location)
-                googleMap?.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(location, 15f)
-                )
+                mapController?.animateTo(location, 15f)
             }
         }
     }
@@ -95,54 +84,90 @@ fun SafeRoutesScreenWithMap(
         }
     }
     
-    // Update map when routes change
-    LaunchedEffect(uiState, safetyPlaces) {
-        googleMap?.let { map ->
-            if (uiState is SafeRoutesUiState.Success) {
-                val routes = (uiState as SafeRoutesUiState.Success).routes
-                // Clear existing polylines
-                map.clear()
-                
-                // Draw routes
-                routes.forEachIndexed { index, route ->
-                    val points = PolyUtil.decode(route.polyline)
-                    val color = when (route.riskLevel) {
-                        RiskLevel.LOW -> android.graphics.Color.parseColor("#4CAF50")
-                        RiskLevel.MEDIUM -> android.graphics.Color.parseColor("#FF9800")
-                        RiskLevel.HIGH -> android.graphics.Color.parseColor("#F44336")
-                    }
-                    
-                    map.addPolyline(
-                        PolylineOptions()
-                            .addAll(points)
-                            .color(color)
-                            .width(if (route.id == selectedRoute?.id) 15f else 10f)
-                            .zIndex(if (route.id == selectedRoute?.id) 1f else 0f)
-                    )
-                }
-                
-                // Draw safety place markers after routes
-                drawSafetyPlaceMarkers(map, safetyPlaces, currentLocation)
-                
-                // Fit camera to show all routes
-                if (routes.isNotEmpty()) {
-                    val bounds = LatLngBounds.builder()
-                    routes.forEach { route ->
-                        PolyUtil.decode(route.polyline).forEach { bounds.include(it) }
-                    }
-                    map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 100))
-                }
-            } else {
-                // Even when no routes, show nearby safety places on map
-                drawSafetyPlaceMarkers(map, safetyPlaces, currentLocation)
+    // Update map when routes change — show only safest route via OSRM with crime zone analysis
+    LaunchedEffect(uiState, safetyPlaces, mapController, destination) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        val markers = mutableListOf<MarkerData>()
+        val boundsPoints = mutableListOf<LatLng>()
+
+        // Find the safest route (recommended or lowest risk)
+        var safestRoute: SafeRoute? = null
+        if (uiState is SafeRoutesUiState.Success) {
+            val routes = (uiState as SafeRoutesUiState.Success).routes
+            safestRoute = routes.firstOrNull { it.isRecommended }
+                ?: routes.minByOrNull { it.riskScore }
+            safestRoute?.let { route ->
+                val points = PolyUtil.decode(route.polyline)
+                boundsPoints.addAll(points)
             }
+        }
+
+        // Safety place markers
+        val center = currentLocation ?: LatLng(28.6139, 77.2090)
+        safetyPlaces.filter { place ->
+            val dist = floatArrayOf(0f)
+            android.location.Location.distanceBetween(
+                center.latitude, center.longitude,
+                place.location.latitude, place.location.longitude, dist
+            )
+            dist[0] <= 30_000f
+        }.forEach { place ->
+            val (emoji, bgColor) = when (place.type) {
+                SafetyPlaceType.POLICE -> "\uD83D\uDE94" to "#1565C0"
+                SafetyPlaceType.HOSPITAL -> "\uD83C\uDFE5" to "#D32F2F"
+            }
+            markers.add(MarkerData(
+                place.location.latitude, place.location.longitude,
+                "$emoji ${place.name}", "", bgColor, emoji, bgColor
+            ))
+        }
+
+        ctrl.batchUpdate(MapUpdateData(
+            clear = true,
+            currentLocation = currentLocation?.let { it.latitude to it.longitude },
+            markers = markers,
+            fitBoundsPoints = if (boundsPoints.size >= 2) boundsPoints else null
+        ))
+
+        // Draw safest route using OSRM with crime zone risk analysis
+        safestRoute?.let { route ->
+            val points = PolyUtil.decode(route.polyline)
+            if (points.size >= 2) {
+                val start = points.first()
+                val end = points.last()
+                ctrl.drawSafeRoute(start, end, crimeZonesForMap)
+            }
+        }
+    }
+
+    // Load all-India police stations as persistent layer
+    LaunchedEffect(policeStations, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (policeStations.isNotEmpty()) {
+            ctrl.addPoliceStations(policeStations)
+        }
+    }
+
+    // Load all-India hospitals as persistent layer
+    LaunchedEffect(hospitals, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (hospitals.isNotEmpty()) {
+            ctrl.addHospitals(hospitals)
+        }
+    }
+
+    // Load all-India safe zones as persistent layer
+    LaunchedEffect(safeZones, mapController) {
+        val ctrl = mapController ?: return@LaunchedEffect
+        if (safeZones.isNotEmpty()) {
+            ctrl.addSafeZones(safeZones)
         }
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.extracted_safe_routes)) },
+                title = { Text("Safe Routes") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
@@ -163,26 +188,22 @@ fun SafeRoutesScreenWithMap(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Google Map
+            // Leaflet Map
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) {
                 if (hasLocationPermission) {
-                    AndroidView(
-                        factory = { ctx ->
-                            MapView(ctx).apply {
-                                onCreate(null)
-                                onResume()
-                                mapView = this
-                                getMapAsync { map ->
-                                    googleMap = map
-                                    setupMap(map, context, currentLocation)
-                                }
+                    LeafletMapView(
+                        modifier = Modifier.fillMaxSize(),
+                        onMapReady = { ctrl ->
+                            mapController = ctrl
+                            currentLocation?.let {
+                                ctrl.setCenter(it.latitude, it.longitude, 15f)
+                                ctrl.setCurrentLocation(it)
                             }
-                        },
-                        modifier = Modifier.fillMaxSize()
+                        }
                     )
                 } else {
                     Box(
@@ -198,7 +219,7 @@ fun SafeRoutesScreenWithMap(
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(stringResource(R.string.extracted_location_permission_required))
+                            Text("Location permission required")
                             Spacer(modifier = Modifier.height(8.dp))
                             Button(
                                 onClick = {
@@ -207,7 +228,7 @@ fun SafeRoutesScreenWithMap(
                                     )
                                 }
                             ) {
-                                Text(stringResource(R.string.extracted_grant_permission))
+                                Text("Grant Permission")
                             }
                         }
                     }
@@ -229,11 +250,11 @@ fun SafeRoutesScreenWithMap(
                 
                 is SafeRoutesUiState.Success -> {
                     val state = uiState as SafeRoutesUiState.Success
-                    RoutesList(
-                        routes = state.routes,
-                        selectedRoute = selectedRoute,
-                        vehicleRecommendation = state.vehicleRecommendation,
-                        onRouteSelected = { viewModel.selectRoute(it) }
+                    val safest = state.routes.firstOrNull { it.isRecommended }
+                        ?: state.routes.minByOrNull { it.riskScore }
+                    SafestRoutePanel(
+                        route = safest,
+                        vehicleRecommendation = state.vehicleRecommendation
                     )
                 }
                 
@@ -261,34 +282,7 @@ fun SafeRoutesScreenWithMap(
     }
     
     DisposableEffect(Unit) {
-        onDispose {
-            mapView?.onDestroy()
-        }
-    }
-}
-
-@SuppressLint("MissingPermission")
-private fun setupMap(
-    map: GoogleMap,
-    context: android.content.Context,
-    currentLocation: LatLng?
-) {
-    map.uiSettings.apply {
-        isZoomControlsEnabled = true
-        isMyLocationButtonEnabled = true
-        isCompassEnabled = true
-    }
-    
-    if (ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        map.isMyLocationEnabled = true
-    }
-    
-    currentLocation?.let {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(it, 15f))
+        onDispose { /* Leaflet WebView cleaned up by Compose */ }
     }
 }
 
@@ -305,125 +299,27 @@ private fun getCurrentLocation(
     }
 }
 
-/**
- * Draw nearby safety place markers (police stations and hospitals) on the map.
- * Limits to places within 30 km of current location to avoid overcrowding.
- */
-private fun drawSafetyPlaceMarkers(
-    map: GoogleMap,
-    safetyPlaces: List<SafetyPlace>,
-    currentLocation: LatLng?
-) {
-    val center = currentLocation ?: LatLng(28.6139, 77.2090)
-    val nearbyPlaces = safetyPlaces.filter { place ->
-        val dist = floatArrayOf(0f)
-        android.location.Location.distanceBetween(
-            center.latitude, center.longitude,
-            place.location.latitude, place.location.longitude,
-            dist
-        )
-        dist[0] <= 30_000f // 30 km radius
-    }
-
-    for (place in nearbyPlaces) {
-        val icon = when (place.type) {
-            SafetyPlaceType.POLICE -> createSRPoliceIcon()
-            SafetyPlaceType.HOSPITAL -> createSRHospitalIcon()
-        }
-        val emoji = when (place.type) {
-            SafetyPlaceType.POLICE -> "🚔"
-            SafetyPlaceType.HOSPITAL -> "🏥"
-        }
-        map.addMarker(
-            MarkerOptions()
-                .position(place.location)
-                .title("$emoji ${place.name}")
-                .icon(icon)
-                .anchor(0.5f, 0.5f)
-                .alpha(0.9f)
-                .zIndex(3f)
-        )
-    }
-}
-
-/** Blue shield with "P" for police */
-private fun createSRPoliceIcon(): BitmapDescriptor {
-    val size = 44
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF1565C0.toInt()
-        style = Paint.Style.FILL
-    }
-    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        style = Paint.Style.STROKE
-        strokeWidth = 2.5f
-    }
-    val rect = android.graphics.RectF(3f, 2f, 41f, 40f)
-    canvas.drawRoundRect(rect, 7f, 7f, bgPaint)
-    canvas.drawRoundRect(rect, 7f, 7f, borderPaint)
-    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        textSize = 26f
-        typeface = Typeface.DEFAULT_BOLD
-        textAlign = Paint.Align.CENTER
-    }
-    canvas.drawText("P", size / 2f, size / 2f + 8f, textPaint)
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
-}
-
-/** Red cross on white circle for hospital */
-private fun createSRHospitalIcon(): BitmapDescriptor {
-    val size = 44
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFFFFFFF.toInt()
-        style = Paint.Style.FILL
-    }
-    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFD32F2F.toInt()
-        style = Paint.Style.STROKE
-        strokeWidth = 2.5f
-    }
-    canvas.drawCircle(size / 2f, size / 2f, 19f, bgPaint)
-    canvas.drawCircle(size / 2f, size / 2f, 19f, borderPaint)
-    val crossPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFFD32F2F.toInt()
-        style = Paint.Style.FILL
-    }
-    canvas.drawRect(19f, 9f, 25f, 35f, crossPaint)
-    canvas.drawRect(9f, 19f, 35f, 25f, crossPaint)
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
-}
-
 @Composable
-fun RoutesList(
-    routes: List<SafeRoute>,
-    selectedRoute: SafeRoute?,
-    vehicleRecommendation: VehicleRecommendation,
-    onRouteSelected: (SafeRoute) -> Unit
+fun SafestRoutePanel(
+    route: SafeRoute?,
+    vehicleRecommendation: VehicleRecommendation
 ) {
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 300.dp),
-        contentPadding = PaddingValues(16.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Vehicle recommendation
-        item {
-            VehicleRecommendationCard(vehicleRecommendation)
-        }
-        
-        // Routes
-        items(routes) { route ->
-            RouteCard(
-                route = route,
-                isSelected = route.id == selectedRoute?.id,
-                onClick = { onRouteSelected(route) }
-            )
+        VehicleRecommendationCard(vehicleRecommendation)
+
+        Text(
+            text = "Safest Route",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+
+        route?.let {
+            RouteCard(route = it, isSelected = true, onClick = {})
         }
     }
 }
@@ -551,7 +447,7 @@ fun SearchPrompt() {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.extracted_tap_to_search_destination),
+                text = "Tap 🔍 to search destination",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -18,6 +18,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.safepulse.data.prefs.UserPreferences
+import com.safepulse.data.repository.RiskZoneRepository
+import com.safepulse.domain.saferoutes.VehicleRecommender
+import com.safepulse.ui.nearbysafety.NearbySafetyScreen
+import com.safepulse.ui.nearbysafety.NearbySafetyViewModel
+import com.safepulse.ui.nearbysafety.NearbySafetyViewModelFactory
+
+import com.safepulse.ui.map.FullScreenMapScreen
 import com.safepulse.domain.model.GlobalState
 import com.safepulse.service.SafetyForegroundService
 import com.safepulse.ui.onboarding.OnboardingOverlayScreen
@@ -186,7 +193,9 @@ fun MainNavigation() {
                 onNavigateToLogs = { navController.navigate("logs") },
                 onNavigateToSettings = { navController.navigate("settings") },
                 onNavigateToSafeRoutes = { navController.navigate("safe_routes") },
-                onNavigateToRiskMap = { navController.navigate("risk_map") }
+                onNavigateToRiskMap = { navController.navigate("risk_map") },
+                onNavigateToFullMap = { navController.navigate("full_map") },
+                onNavigateToNearbySafety = { navController.navigate("nearby_safety") }
             )
         }
 
@@ -219,6 +228,24 @@ fun MainNavigation() {
         composable("risk_map") {
             RiskMapScreenWrapper(
                 onBack = { navController.popBackStack() }
+            )
+        }
+        composable("full_map") {
+            FullScreenMapScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("nearby_safety") {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val riskZoneRepository = remember { RiskZoneRepository(context) }
+            val vehicleRecommender = remember { VehicleRecommender() }
+            val viewModel: NearbySafetyViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                factory = NearbySafetyViewModelFactory(riskZoneRepository, vehicleRecommender)
+            )
+            NearbySafetyScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

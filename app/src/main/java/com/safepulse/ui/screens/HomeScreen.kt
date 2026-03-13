@@ -48,6 +48,8 @@ fun HomeScreen(
     onNavigateToSafeRoutes: () -> Unit = {},
     onNavigateToRiskMap: () -> Unit = {},
     onNavigateToEventLogs: () -> Unit = {},
+    onNavigateToFullMap: () -> Unit = {},
+    onNavigateToNearbySafety: () -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -362,6 +364,98 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Interactive Map card (full-screen Leaflet map)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToFullMap() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE3F2FD)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Explore,
+                        contentDescription = "Interactive Map",
+                        tint = Color(0xFF1565C0),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Interactive Map",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color(0xFF1565C0)
+                        )
+                        Text(
+                            "Add markers, draw routes, explore",
+                            fontSize = 11.sp,
+                            color = Color(0xFF1565C0).copy(alpha = 0.7f)
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = Color(0xFF1565C0).copy(alpha = 0.5f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Find Nearby Safety card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToNearbySafety() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE8EAF6)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.LocalPolice,
+                        contentDescription = "Find Nearby Safety",
+                        tint = Color(0xFF283593),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Find Nearby Safety",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color(0xFF283593)
+                        )
+                        Text(
+                            "Police, Hospitals, Safe Zones & Routes",
+                            fontSize = 11.sp,
+                            color = Color(0xFF283593).copy(alpha = 0.7f)
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = Color(0xFF283593).copy(alpha = 0.5f)
+                    )
                 }
             }
             

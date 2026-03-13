@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="leaflet.css" />
+    <script src="leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        #map { width: 100%; height: 100%; }
+        .legend {
+            background: rgba(255,255,255,0.92);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.6;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .legend-title { font-weight: bold; margin-bottom: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-dot {
+            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+        }
+        .custom-marker {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; color: white; font-weight: bold;
+            font-size: 14px; border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .police-marker {
+            display: flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #1565C0; color: white; font-size: 12px;
+            border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .hospital-marker {
+            display: flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #D32F2F; color: white; font-size: 12px;
+            border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .safezone-marker {
+            display: flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #2E7D32; color: white; font-size: 12px;
+            border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .police-cluster {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: rgba(21,101,192,0.8);
+            color: white; font-weight: bold; font-size: 12px;
+            border: 3px solid rgba(21,101,192,0.4);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .popup-content { font-size: 12px; max-width: 220px; }
+        .popup-title { font-weight: bold; margin-bottom: 4px; }
+        .popup-snippet { color: #666; font-size: 11px; }
+        .popup-actions { margin-top: 6px; }
+        .popup-actions button {
+            background: #F44336; color: white; border: none;
+            border-radius: 4px; padding: 4px 10px; font-size: 11px;
+            cursor: pointer;
+        }
+        .popup-actions button:hover { background: #D32F2F; }
+        .offline-badge {
+            background: rgba(244,67,54,0.9);
+            color: white;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .offline-badge.online {
+            background: rgba(76,175,80,0.9);
+        }
+        .cache-info {
+            background: rgba(255,255,255,0.92);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 11px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .route-info {
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            line-height: 1.5;
+        }
+        .route-info-title { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+        .route-info-detail { color: #333; }
+        .safe-route-info {
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            line-height: 1.6;
+            border-left: 4px solid #4CAF50;
+        }
+        .safe-route-info .risk-low { color: #4CAF50; font-weight: bold; }
+        .safe-route-info .risk-med { color: #FF9800; font-weight: bold; }
+        .safe-route-info .risk-high { color: #F44336; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        // Fix Leaflet default icon path for Android WebView asset loading
+        L.Icon.Default.imagePath = 'file:///android_asset/images/';
+        L.Icon.Default.prototype.options.imagePath = 'file:///android_asset/images/';
+
+        // ─── Initialize map centered on India ───────────────
+        var map = L.map('map', {
+            zoomControl: true,
+            attributionControl: false
+        }).setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap',
+            // Tile error handler: shows gray tile when offline and tile not cached
+            errorTileUrl: ''
+        }).addTo(map).on('tileerror', function(e) {
+            // Gray placeholder for missing tiles (offline + not cached)
+            e.tile.style.background = '#e0e0e0';
+            e.tile.alt = 'Offline';
+        });
+
+        // ─── Offline / Online indicator ──────────────────────
+        var offlineControl = L.control({ position: 'topright' });
+        var isOnline = navigator.onLine;
+        offlineControl.onAdd = function() {
+            var div = L.DomUtil.create('div', 'offline-badge' + (isOnline ? ' online' : ''));
+            div.id = 'offline-indicator';
+            div.innerHTML = isOnline ? '\u2705 Online' : '\uD83D\uDCF5 Offline (cached)';
+            return div;
+        };
+        offlineControl.addTo(map);
+
+        window.addEventListener('online', function() {
+            isOnline = true;
+            var el = document.getElementById('offline-indicator');
+            if (el) { el.className = 'offline-badge online'; el.innerHTML = '\u2705 Online'; }
+        });
+        window.addEventListener('offline', function() {
+            isOnline = false;
+            var el = document.getElementById('offline-indicator');
+            if (el) { el.className = 'offline-badge'; el.innerHTML = '\uD83D\uDCF5 Offline (cached)'; }
+        });
+
+        // ─── Layer groups for easy management ────────────────
+        var markersLayer = L.layerGroup().addTo(map);
+        var circlesLayer = L.layerGroup().addTo(map);
+        var polylinesLayer = L.layerGroup().addTo(map);
+        var routeLayer = L.layerGroup().addTo(map);
+        var userMarkersLayer = L.layerGroup().addTo(map);
+        var policeLayer = L.layerGroup().addTo(map);
+        var hospitalLayer = L.layerGroup().addTo(map);
+        var safeZoneLayer = L.layerGroup().addTo(map);
+        var currentLocMarker = null;
+        var currentLocAccuracy = null;
+
+        // Counter for user-added markers
+        var userMarkerIdCounter = 0;
+        // Store user-added markers by id for removal
+        var userMarkersMap = {};
+
+        // Route info control
+        var routeInfoControl = null;
+
+        // ─── Map Control Functions ──────────────────────────
+        function setCenter(lat, lng, zoom) {
+            map.setView([lat, lng], zoom);
+        }
+
+        function animateTo(lat, lng, zoom) {
+            map.flyTo([lat, lng], zoom, { duration: 0.8 });
+        }
+
+        function clearAll() {
+            markersLayer.clearLayers();
+            circlesLayer.clearLayers();
+            polylinesLayer.clearLayers();
+            routeLayer.clearLayers();
+            userMarkersLayer.clearLayers();
+            userMarkersMap = {};
+            if (routeInfoControl) {
+                map.removeControl(routeInfoControl);
+                routeInfoControl = null;
+            }
+            // Note: policeLayer, hospitalLayer, safeZoneLayer are NOT cleared - they persist across updates
+        }
+
+        function clearMarkers() {
+            markersLayer.clearLayers();
+        }
+
+        function clearCircles() {
+            circlesLayer.clearLayers();
+        }
+
+        function clearPolylines() {
+            polylinesLayer.clearLayers();
+        }
+
+        function clearRoutes() {
+            routeLayer.clearLayers();
+            if (routeInfoControl) {
+                map.removeControl(routeInfoControl);
+                routeInfoControl = null;
+            }
+        }
+
+        function clearUserMarkers() {
+            userMarkersLayer.clearLayers();
+            userMarkersMap = {};
+        }
+
+        function clearPolice() {
+            policeLayer.clearLayers();
+        }
+
+        function clearHospitals() {
+            hospitalLayer.clearLayers();
+        }
+
+        function clearSafeZones() {
+            safeZoneLayer.clearLayers();
+        }
+
+        // ─── Hospitals Layer ─────────────────────────────────────
+        function addHospitals(hospitalsJson) {
+            hospitalLayer.clearLayers();
+            var hospitals = JSON.parse(hospitalsJson);
+            hospitals.forEach(function(h) {
+                var icon = L.divIcon({
+                    html: '<div class="hospital-marker">\uD83C\uDFE5</div>',
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                var marker = L.marker([h.lat, h.lng], { icon: icon });
+                var name = h.name || 'Hospital';
+                marker.bindPopup(
+                    '<div class="popup-content">' +
+                    '<div class="popup-title">\uD83C\uDFE5 ' + name + '</div>' +
+                    '<div class="popup-snippet">Hospital<br>Lat: ' + h.lat.toFixed(4) + ', Lng: ' + h.lng.toFixed(4) + '</div>' +
+                    '</div>'
+                );
+                hospitalLayer.addLayer(marker);
+            });
+        }
+
+        // ─── Safe Zones Layer ────────────────────────────────────
+        function addSafeZones(zonesJson) {
+            safeZoneLayer.clearLayers();
+            var zones = JSON.parse(zonesJson);
+            zones.forEach(function(z) {
+                // Add circle for the safe zone area
+                L.circle([z.lat, z.lng], {
+                    radius: z.radiusMeters || 2000,
+                    fillColor: '#4CAF50',
+                    color: '#2E7D32',
+                    weight: 2,
+                    fillOpacity: 0.12,
+                    opacity: 0.4
+                }).addTo(safeZoneLayer);
+                // Add marker
+                var icon = L.divIcon({
+                    html: '<div class="safezone-marker">\u2705</div>',
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                var marker = L.marker([z.lat, z.lng], { icon: icon });
+                var name = z.name || 'Safe Zone';
+                marker.bindPopup(
+                    '<div class="popup-content">' +
+                    '<div class="popup-title">\u2705 ' + name + '</div>' +
+                    '<div class="popup-snippet">Low crime area<br>' + (z.state || '') + '</div>' +
+                    '</div>'
+                );
+                safeZoneLayer.addLayer(marker);
+            });
+        }
+
+        // ─── Police Stations Layer ────────────────────────────
+        // Adds police stations as small clustered markers that appear at zoom >= 10
+        function addPoliceStations(stationsJson) {
+            policeLayer.clearLayers();
+            var stations = JSON.parse(stationsJson);
+            stations.forEach(function(s) {
+                var icon = L.divIcon({
+                    html: '<div class="police-marker">\uD83D\uDE94</div>',
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                var marker = L.marker([s.lat, s.lng], { icon: icon });
+                var name = s.name || 'Police Station';
+                marker.bindPopup(
+                    '<div class="popup-content">' +
+                    '<div class="popup-title">\uD83D\uDE94 ' + name + '</div>' +
+                    '<div class="popup-snippet">Police Station<br>Lat: ' + s.lat.toFixed(4) + ', Lng: ' + s.lng.toFixed(4) + '</div>' +
+                    '</div>'
+                );
+                policeLayer.addLayer(marker);
+            });
+        }
+
+        // Batch add police stations near a location (called from Kotlin)
+        function addPoliceStationsNear(stationsJson) {
+            addPoliceStations(stationsJson);
+        }
+
+        // ─── Current Location (updates dynamically) ─────────
+        function setCurrentLocation(lat, lng) {
+            if (currentLocMarker) {
+                currentLocMarker.setLatLng([lat, lng]);
+                if (currentLocAccuracy) {
+                    currentLocAccuracy.setLatLng([lat, lng]);
+                }
+            } else {
+                currentLocMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: '#4285F4',
+                    color: '#ffffff',
+                    weight: 3,
+                    fillOpacity: 1
+                }).addTo(map);
+                currentLocMarker.bindPopup('<div class="popup-content"><div class="popup-title">Your Location</div></div>');
+
+                currentLocAccuracy = L.circle([lat, lng], {
+                    radius: 50,
+                    fillColor: '#4285F4',
+                    color: '#4285F4',
+                    weight: 1,
+                    fillOpacity: 0.15,
+                    opacity: 0.3
+                }).addTo(map);
+            }
+        }
+
+        // ─── Markers ────────────────────────────────────────
+        function addMarker(lat, lng, title, snippet, color) {
+            var iconHtml = '<div class="custom-marker" style="background:' + color +
+                ';width:28px;height:28px;">\u25CF</div>';
+            var icon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+            var marker = L.marker([lat, lng], { icon: icon }).addTo(markersLayer);
+            if (title || snippet) {
+                var popupHtml = '<div class="popup-content">';
+                if (title) popupHtml += '<div class="popup-title">' + title + '</div>';
+                if (snippet) popupHtml += '<div class="popup-snippet">' + snippet + '</div>';
+                popupHtml += '</div>';
+                marker.bindPopup(popupHtml);
+            }
+            return marker;
+        }
+
+        function addMarkerWithIcon(lat, lng, title, snippet, emoji, bgColor) {
+            var iconHtml = '<div class="custom-marker" style="background:' + bgColor +
+                ';width:32px;height:32px;font-size:16px;">' + emoji + '</div>';
+            var icon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+            var marker = L.marker([lat, lng], { icon: icon }).addTo(markersLayer);
+            if (title || snippet) {
+                var popupHtml = '<div class="popup-content">';
+                if (title) popupHtml += '<div class="popup-title">' + title + '</div>';
+                if (snippet) popupHtml += '<div class="popup-snippet">' + snippet + '</div>';
+                popupHtml += '</div>';
+                marker.bindPopup(popupHtml);
+            }
+        }
+
+        // ─── User-Added Markers (tap to add, tap popup to remove) ──
+        function addUserMarker(lat, lng, title) {
+            var markerId = 'user_' + (++userMarkerIdCounter);
+            var iconHtml = '<div class="custom-marker" style="background:#E91E63;width:30px;height:30px;font-size:14px;">\uD83D\uDCCD</div>';
+            var icon = L.divIcon({
+                html: iconHtml,
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+            var marker = L.marker([lat, lng], { icon: icon }).addTo(userMarkersLayer);
+            marker._userMarkerId = markerId;
+
+            var displayTitle = title || ('Marker @ ' + lat.toFixed(5) + ', ' + lng.toFixed(5));
+            var popupHtml = '<div class="popup-content">' +
+                '<div class="popup-title">' + displayTitle + '</div>' +
+                '<div class="popup-snippet">Lat: ' + lat.toFixed(5) + '<br>Lng: ' + lng.toFixed(5) + '</div>' +
+                '<div class="popup-actions">' +
+                '<button onclick="removeUserMarker(\'' + markerId + '\')">Remove Marker</button>' +
+                '</div></div>';
+            marker.bindPopup(popupHtml);
+
+            userMarkersMap[markerId] = marker;
+
+            // Notify Kotlin
+            if (window.AndroidBridge && window.AndroidBridge.onMarkerAdded) {
+                window.AndroidBridge.onMarkerAdded(markerId, lat, lng);
+            }
+            return markerId;
+        }
+
+        function removeUserMarker(markerId) {
+            var marker = userMarkersMap[markerId];
+            if (marker) {
+                userMarkersLayer.removeLayer(marker);
+                delete userMarkersMap[markerId];
+                // Notify Kotlin
+                if (window.AndroidBridge && window.AndroidBridge.onMarkerRemoved) {
+                    window.AndroidBridge.onMarkerRemoved(markerId);
+                }
+            }
+        }
+
+        // ─── Circles (Risk Zones) ───────────────────────────
+        function addCircle(lat, lng, radiusMeters, fillColor, strokeColor, fillOpacity, strokeOpacity) {
+            L.circle([lat, lng], {
+                radius: radiusMeters,
+                fillColor: fillColor,
+                color: strokeColor,
+                weight: 2,
+                fillOpacity: fillOpacity || 0.25,
+                opacity: strokeOpacity || 0.5
+            }).addTo(circlesLayer);
+        }
+
+        // ─── Polylines (Routes) ─────────────────────────────
+        function addPolyline(pointsJson, color, weight, dashArray) {
+            var points = JSON.parse(pointsJson);
+            var latlngs = points.map(function(p) { return [p[0], p[1]]; });
+            var opts = {
+                color: color || '#2196F3',
+                weight: weight || 6,
+                opacity: 0.85
+            };
+            if (dashArray) {
+                opts.dashArray = dashArray;
+            }
+            L.polyline(latlngs, opts).addTo(polylinesLayer);
+        }
+
+        // ─── OSRM Routing ───────────────────────────────────
+        function drawRoute(startLat, startLng, endLat, endLng) {
+            routeLayer.clearLayers();
+            if (routeInfoControl) {
+                map.removeControl(routeInfoControl);
+                routeInfoControl = null;
+            }
+
+            var url = 'https://router.project-osrm.org/route/v1/driving/' +
+                startLng + ',' + startLat + ';' + endLng + ',' + endLat +
+                '?overview=full&geometries=geojson&alternatives=true';
+
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                        if (window.AndroidBridge && window.AndroidBridge.onRouteError) {
+                            window.AndroidBridge.onRouteError('No route found');
+                        }
+                        return;
+                    }
+
+                    var route = data.routes[0];
+                    var coords = route.geometry.coordinates.map(function(c) {
+                        return [c[1], c[0]];
+                    });
+
+                    // Draw route polyline
+                    var routeLine = L.polyline(coords, {
+                        color: '#2196F3',
+                        weight: 6,
+                        opacity: 0.85
+                    }).addTo(routeLayer);
+
+                    // Start marker
+                    var startIcon = L.divIcon({
+                        html: '<div class="custom-marker" style="background:#4CAF50;width:30px;height:30px;font-size:14px;">\uD83C\uDFC1</div>',
+                        className: '',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 30]
+                    });
+                    L.marker([startLat, startLng], { icon: startIcon })
+                        .addTo(routeLayer)
+                        .bindPopup('<div class="popup-content"><div class="popup-title">Start</div></div>');
+
+                    // End marker
+                    var endIcon = L.divIcon({
+                        html: '<div class="custom-marker" style="background:#F44336;width:30px;height:30px;font-size:14px;">\uD83C\uDFAF</div>',
+                        className: '',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 30]
+                    });
+                    L.marker([endLat, endLng], { icon: endIcon })
+                        .addTo(routeLayer)
+                        .bindPopup('<div class="popup-content"><div class="popup-title">Destination</div></div>');
+
+                    // Calculate distance and duration
+                    var distanceKm = (route.distance / 1000).toFixed(2);
+                    var durationMin = Math.round(route.duration / 60);
+
+                    // Show route info control
+                    routeInfoControl = L.control({ position: 'bottomleft' });
+                    routeInfoControl.onAdd = function() {
+                        var div = L.DomUtil.create('div', 'route-info');
+                        div.innerHTML = '<div class="route-info-title">\uD83D\uDEE3\uFE0F Route Info</div>' +
+                            '<div class="route-info-detail">\uD83D\uDCCF Distance: <b>' + distanceKm + ' km</b></div>' +
+                            '<div class="route-info-detail">\u23F1\uFE0F Duration: <b>' + durationMin + ' min</b></div>';
+                        return div;
+                    };
+                    routeInfoControl.addTo(map);
+
+                    // Fit bounds to show full route
+                    map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+
+                    // Notify Kotlin
+                    if (window.AndroidBridge && window.AndroidBridge.onRouteReady) {
+                        window.AndroidBridge.onRouteReady(
+                            parseFloat(distanceKm),
+                            durationMin,
+                            JSON.stringify(coords)
+                        );
+                    }
+                })
+                .catch(function(err) {
+                    if (window.AndroidBridge && window.AndroidBridge.onRouteError) {
+                        window.AndroidBridge.onRouteError(err.message || 'Routing failed');
+                    }
+                });
+        }
+
+        // ─── OSRM Safe Route with alternatives & risk analysis ───
+        function drawSafeRoute(startLat, startLng, endLat, endLng, crimeZonesJson) {
+            routeLayer.clearLayers();
+            if (routeInfoControl) {
+                map.removeControl(routeInfoControl);
+                routeInfoControl = null;
+            }
+
+            var crimeZones = [];
+            try { crimeZones = JSON.parse(crimeZonesJson); } catch(e) {}
+
+            var url = 'https://router.project-osrm.org/route/v1/driving/' +
+                startLng + ',' + startLat + ';' + endLng + ',' + endLat +
+                '?overview=full&geometries=geojson&alternatives=3';
+
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                        if (window.AndroidBridge && window.AndroidBridge.onRouteError) {
+                            window.AndroidBridge.onRouteError('No route found');
+                        }
+                        return;
+                    }
+
+                    // Score each route against crime zones
+                    var scored = data.routes.map(function(route, idx) {
+                        var coords = route.geometry.coordinates.map(function(c) {
+                            return [c[1], c[0]];
+                        });
+                        var riskScore = computeRouteRisk(coords, crimeZones);
+                        return {
+                            route: route,
+                            coords: coords,
+                            riskScore: riskScore,
+                            distanceKm: route.distance / 1000,
+                            durationMin: Math.round(route.duration / 60),
+                            index: idx
+                        };
+                    });
+
+                    // Sort by risk (safest first)
+                    scored.sort(function(a, b) { return a.riskScore - b.riskScore; });
+
+                    // Draw alternatives first (gray, dashed)
+                    for (var i = scored.length - 1; i >= 1; i--) {
+                        var alt = scored[i];
+                        L.polyline(alt.coords, {
+                            color: '#9E9E9E',
+                            weight: 4,
+                            opacity: 0.4,
+                            dashArray: '8, 8'
+                        }).addTo(routeLayer).bindPopup(
+                            '<div class="popup-content"><div class="popup-title">Alternative Route ' + (i + 1) + '</div>' +
+                            '<div class="popup-snippet">Risk: ' + (alt.riskScore * 100).toFixed(0) + '% | ' +
+                            alt.distanceKm.toFixed(1) + ' km | ' + alt.durationMin + ' min</div></div>'
+                        );
+                    }
+
+                    // Draw safest route on top (green, thick)
+                    var safest = scored[0];
+                    var routeColor = safest.riskScore < 0.3 ? '#4CAF50' :
+                                     safest.riskScore < 0.6 ? '#FF9800' : '#F44336';
+
+                    // Draw route outline for visibility
+                    L.polyline(safest.coords, {
+                        color: '#ffffff',
+                        weight: 10,
+                        opacity: 0.6
+                    }).addTo(routeLayer);
+
+                    var routeLine = L.polyline(safest.coords, {
+                        color: routeColor,
+                        weight: 7,
+                        opacity: 0.9
+                    }).addTo(routeLayer);
+
+                    // Start marker
+                    var startIcon = L.divIcon({
+                        html: '<div class="custom-marker" style="background:#4CAF50;width:32px;height:32px;font-size:16px;">\uD83D\uDFE2</div>',
+                        className: '',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    });
+                    L.marker([startLat, startLng], { icon: startIcon })
+                        .addTo(routeLayer)
+                        .bindPopup('<div class="popup-content"><div class="popup-title">\uD83D\uDFE2 Start</div></div>');
+
+                    // End marker
+                    var endIcon = L.divIcon({
+                        html: '<div class="custom-marker" style="background:#F44336;width:32px;height:32px;font-size:16px;">\uD83C\uDFAF</div>',
+                        className: '',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    });
+                    L.marker([endLat, endLng], { icon: endIcon })
+                        .addTo(routeLayer)
+                        .bindPopup('<div class="popup-content"><div class="popup-title">\uD83C\uDFAF Destination</div></div>');
+
+                    // Show safe route info panel
+                    routeInfoControl = L.control({ position: 'bottomleft' });
+                    routeInfoControl.onAdd = function() {
+                        var div = L.DomUtil.create('div', 'safe-route-info');
+                        var riskClass = safest.riskScore < 0.3 ? 'risk-low' :
+                                        safest.riskScore < 0.6 ? 'risk-med' : 'risk-high';
+                        var riskLabel = safest.riskScore < 0.3 ? 'LOW RISK' :
+                                        safest.riskScore < 0.6 ? 'MEDIUM RISK' : 'HIGH RISK';
+                        div.innerHTML =
+                            '<div class="route-info-title">\u2705 Safest Route</div>' +
+                            '<div class="route-info-detail">Safety: <span class="' + riskClass + '">' + riskLabel + ' (' + (safest.riskScore * 100).toFixed(0) + '%)</span></div>' +
+                            '<div class="route-info-detail">\uD83D\uDCCF ' + safest.distanceKm.toFixed(1) + ' km &nbsp; \u23F1\uFE0F ' + safest.durationMin + ' min</div>' +
+                            (scored.length > 1 ? '<div class="route-info-detail" style="font-size:10px;color:#888;margin-top:4px;">' + scored.length + ' routes analyzed</div>' : '');
+                        return div;
+                    };
+                    routeInfoControl.addTo(map);
+
+                    // Fit bounds
+                    map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+
+                    // Notify Kotlin with safest route data
+                    if (window.AndroidBridge && window.AndroidBridge.onRouteReady) {
+                        window.AndroidBridge.onRouteReady(
+                            parseFloat(safest.distanceKm.toFixed(2)),
+                            safest.durationMin,
+                            JSON.stringify(safest.coords)
+                        );
+                    }
+                })
+                .catch(function(err) {
+                    // Fallback to basic route
+                    drawRoute(startLat, startLng, endLat, endLng);
+                });
+        }
+
+        // Compute risk score for a route against crime zones
+        function computeRouteRisk(routeCoords, crimeZones) {
+            if (!crimeZones || crimeZones.length === 0) return 0;
+
+            var totalRisk = 0;
+            var sampleStep = Math.max(1, Math.floor(routeCoords.length / 20));
+
+            for (var i = 0; i < routeCoords.length; i += sampleStep) {
+                var pt = routeCoords[i];
+                for (var j = 0; j < crimeZones.length; j++) {
+                    var zone = crimeZones[j];
+                    var dist = haversineMeters(pt[0], pt[1], zone.lat, zone.lng);
+                    var radius = zone.radiusMeters || 2000;
+                    if (dist < radius * 1.5) {
+                        var decay = 1 - (dist / (radius * 1.5));
+                        var score = (zone.crimeRiskScore || 0.5) * decay;
+                        totalRisk += score * 0.05;
+                    }
+                }
+            }
+            return Math.min(totalRisk, 1.0);
+        }
+
+        function haversineMeters(lat1, lng1, lat2, lng2) {
+            var R = 6371000;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLng = (lng2 - lng1) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // ─── OSRM Routing via Waypoints ──────────────────────
+        function drawRouteViaWaypoints(waypointsJson, color, weight) {
+            var waypoints = JSON.parse(waypointsJson);
+            if (waypoints.length < 2) return;
+
+            // Build OSRM coordinate string: lng,lat;lng,lat;...
+            var coords = waypoints.map(function(wp) {
+                return wp[1] + ',' + wp[0]; // [lng, lat]
+            }).join(';');
+
+            var url = 'https://router.project-osrm.org/route/v1/driving/' +
+                coords + '?overview=full&geometries=geojson';
+
+            fetch(url)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                        // Fallback: draw straight lines if OSRM fails
+                        var latlngs = waypoints.map(function(wp) { return [wp[0], wp[1]]; });
+                        L.polyline(latlngs, {
+                            color: color || '#2196F3',
+                            weight: weight || 6,
+                            opacity: 0.85
+                        }).addTo(routeLayer);
+                        return;
+                    }
+
+                    var route = data.routes[0];
+                    var routeCoords = route.geometry.coordinates.map(function(c) {
+                        return [c[1], c[0]];
+                    });
+
+                    // Draw outline for visibility
+                    L.polyline(routeCoords, {
+                        color: '#ffffff',
+                        weight: (weight || 6) + 4,
+                        opacity: 0.5
+                    }).addTo(routeLayer);
+
+                    L.polyline(routeCoords, {
+                        color: color || '#2196F3',
+                        weight: weight || 6,
+                        opacity: 0.85
+                    }).addTo(routeLayer);
+                })
+                .catch(function(err) {
+                    // Fallback: draw straight lines
+                    var latlngs = waypoints.map(function(wp) { return [wp[0], wp[1]]; });
+                    L.polyline(latlngs, {
+                        color: color || '#2196F3',
+                        weight: weight || 6,
+                        opacity: 0.85
+                    }).addTo(routeLayer);
+                });
+        }
+
+        // ─── Fit Bounds ─────────────────────────────────────
+        function fitBounds(boundsJson) {
+            var bounds = JSON.parse(boundsJson);
+            if (bounds.length >= 2) {
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+            }
+        }
+
+        function fitToLayers() {
+            var allLayers = [];
+            markersLayer.eachLayer(function(l) { allLayers.push(l); });
+            circlesLayer.eachLayer(function(l) { allLayers.push(l); });
+            polylinesLayer.eachLayer(function(l) { allLayers.push(l); });
+            routeLayer.eachLayer(function(l) { allLayers.push(l); });
+            userMarkersLayer.eachLayer(function(l) { allLayers.push(l); });
+            if (currentLocMarker) allLayers.push(currentLocMarker);
+
+            if (allLayers.length > 0) {
+                var group = L.featureGroup(allLayers);
+                map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 16 });
+            }
+        }
+
+        // ─── Batch update for performance ────────────────────
+        function batchUpdate(json) {
+            var data = JSON.parse(json);
+
+            if (data.clear) clearAll();
+
+            if (data.center) {
+                setCenter(data.center[0], data.center[1], data.center[2] || 12);
+            }
+
+            if (data.currentLocation) {
+                setCurrentLocation(data.currentLocation[0], data.currentLocation[1]);
+            }
+
+            if (data.circles) {
+                data.circles.forEach(function(c) {
+                    addCircle(c.lat, c.lng, c.radius, c.fillColor, c.strokeColor, c.fillOpacity, c.strokeOpacity);
+                });
+            }
+
+            if (data.markers) {
+                data.markers.forEach(function(m) {
+                    if (m.emoji) {
+                        addMarkerWithIcon(m.lat, m.lng, m.title || '', m.snippet || '', m.emoji, m.bgColor || m.color);
+                    } else {
+                        addMarker(m.lat, m.lng, m.title || '', m.snippet || '', m.color || '#F44336');
+                    }
+                });
+            }
+
+            if (data.polylines) {
+                data.polylines.forEach(function(p) {
+                    addPolyline(JSON.stringify(p.points), p.color, p.weight, p.dashArray);
+                });
+            }
+
+            // Police stations from batch data
+            if (data.policeStations) {
+                addPoliceStations(JSON.stringify(data.policeStations));
+            }
+
+            // Hospitals from batch data
+            if (data.hospitals) {
+                addHospitals(JSON.stringify(data.hospitals));
+            }
+
+            // Safe zones from batch data
+            if (data.safeZones) {
+                addSafeZones(JSON.stringify(data.safeZones));
+            }
+
+            if (data.fitBounds) {
+                fitBounds(JSON.stringify(data.fitBounds));
+            } else if (data.fitToLayers) {
+                fitToLayers();
+            }
+        }
+
+        // ─── Map tap interaction ─────────────────────────────
+        // When tapToAddMarker mode is enabled, tapping the map adds a user marker
+        var tapToAddEnabled = false;
+
+        function enableTapToAdd() {
+            tapToAddEnabled = true;
+        }
+
+        function disableTapToAdd() {
+            tapToAddEnabled = false;
+        }
+
+        map.on('click', function(e) {
+            if (tapToAddEnabled) {
+                addUserMarker(e.latlng.lat, e.latlng.lng, null);
+            }
+            // Always notify Kotlin of map taps
+            if (window.AndroidBridge && window.AndroidBridge.onMapTapped) {
+                window.AndroidBridge.onMapTapped(e.latlng.lat, e.latlng.lng);
+            }
+        });
+
+        // ─── Signal map ready to Android ─────────────────────
+        function notifyReady() {
+            if (window.AndroidBridge) {
+                window.AndroidBridge.onMapReady();
+            }
+        }
+
+        map.whenReady(function() {
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 200);
+            notifyReady();
+        });
+    </script>
+</body>
+</html>

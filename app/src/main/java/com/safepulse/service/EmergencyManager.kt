@@ -34,12 +34,12 @@ class EmergencyManager(private val context: Context) {
     }
     
     private val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm:ss", Locale.getDefault())
+    private val cameraCapture = EmergencyCameraCapture(context)
     
     // NearbyServicesManager will be injected when needed
     private var nearbyServicesManager: NearbyServicesManager? = null
     
-    // Camera capture for emergency photos
-    private val cameraCapture = EmergencyCameraCapture(context)
+   
     
     /**
      * Set the nearby services manager
@@ -262,7 +262,7 @@ Auto-sent by SafePulse Safety System
     }
     
     /**
-     * Triple volume button emergency - capture photo and send with SOS
+     * Triple volume button emergency - send SOS and initiate call
      */
     suspend fun triggerVolumeButtonEmergency(
         contacts: List<EmergencyContactEntity>,

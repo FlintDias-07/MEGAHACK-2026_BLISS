@@ -59,7 +59,7 @@ fun HomeScreen(
         )
     }
     
-    val activeTargetId = TutorialTargetRegistry.activeTargetId
+    val activeTargetId = TutorialTargetRegistry.activeTargetId.value
     LaunchedEffect(activeTargetId) {
         activeTargetId?.let { id ->
             requesters[id]?.bringIntoView()

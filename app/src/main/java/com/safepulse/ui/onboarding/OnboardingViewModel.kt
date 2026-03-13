@@ -133,7 +133,7 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     
     fun completeOnboarding() {
         stopSpeaking()
-        TutorialTargetRegistry.activeTargetId = null
+        TutorialTargetRegistry.setActiveTarget(null)
         viewModelScope.launch {
             userPreferences.setOnboardingTutorialComplete(true)
         }
@@ -172,6 +172,6 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
     }
     
     private fun updateActiveTarget() {
-        TutorialTargetRegistry.activeTargetId = getCurrentStep().targetComponentId
+        TutorialTargetRegistry.setActiveTarget(getCurrentStep().targetComponentId)
     }
 }

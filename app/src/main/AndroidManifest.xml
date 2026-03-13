@@ -84,6 +84,20 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Wearable Listener Service (receives messages from watch) -->
+        <service
+            android:name=".service.PhoneWearListenerService"
+            android:exported="true"
+            android:permission="com.google.android.gms.permission.BIND_LISTENER">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
         <!-- WorkManager Initializer -->
         <provider
             android:name="androidx.startup.InitializationProvider"

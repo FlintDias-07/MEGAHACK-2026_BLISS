@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">SafePulse</string>
+    
+    <!-- Common -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_back">Back</string>
+    <string name="action_next">Next</string>
+    <string name="action_complete">Complete</string>
+    <string name="action_add">Add</string>
+    <string name="action_close">Close</string>
+    <string name="action_delete">Delete</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">Welcome to SafePulse</string>
+    <string name="onboarding_subtitle">Your Personal Safety Companion</string>
+    <string name="onboarding_language_title">Choose App Language</string>
+    <string name="onboarding_language_subtitle">Select your preferred language. You can change it later in Settings.</string>
+    <string name="onboarding_gender_title">Select Gender</string>
+    <string name="onboarding_gender_subtitle">This helps us customize safety features for you</string>
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_other">Other</string>
+    <string name="onboarding_contacts_title">Emergency Contacts</string>
+    <string name="onboarding_contacts_subtitle">Add at least 2 emergency contacts</string>
+    <string name="add_contact">Add Contact</string>
+    <string name="contact_name">Name</string>
+    <string name="contact_phone">Phone Number</string>
+    <string name="set_as_primary">Set as Primary Contact</string>
+    <string name="onboarding_voice_title">Voice Trigger</string>
+    <string name="onboarding_voice_subtitle">Enable voice emergency keyword detection</string>
+    <string name="enable_voice_trigger">Enable Voice Trigger</string>
+    <string name="onboarding_complete">Get Started</string>
+    <string name="onboarding_contacts_count">%1$d/2 minimum contacts added</string>
+    <string name="primary_badge">PRIMARY</string>
+    <string name="remove_contact">Remove contact</string>
+    <string name="add_emergency_contact">Add Emergency Contact</string>
+    <string name="contact_phone_hint">Phone Number (10 digits)</string>
+    <string name="contact_digits_count">%1$d/10 digits</string>
+    <string name="error_enter_name">Please enter a name</string>
+    <string name="error_enter_phone">Please enter a phone number</string>
+    <string name="error_phone_10_digits">Phone number must be exactly 10 digits</string>
+    <string name="error_phone_digits_only">Phone number must contain only digits</string>
+    <string name="voice_emergency_trigger_title">Voice Emergency Trigger</string>
+    <string name="voice_emergency_trigger_hint">Say "Help", "Save me", or "Emergency" to trigger SOS</string>
+    <string name="voice_trigger_disclaimer">This feature requires microphone permission and will listen for keywords when safety mode is active.</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">SafePulse</string>
+    <string name="safety_service">Safety Service</string>
+    <string name="service_running">Service Running</string>
+    <string name="service_stopped">Service Stopped</string>
+    <string name="start_monitoring">Start Monitoring</string>
+    <string name="stop_monitoring">Stop Monitoring</string>
+    <string name="risk_level">Risk Level</string>
+    <string name="risk_low">Low</string>
+    <string name="risk_medium">Medium</string>
+    <string name="risk_high">High</string>
+    <string name="safety_mode">Safety Mode</string>
+    <string name="mode_normal">Normal</string>
+    <string name="mode_heightened">Heightened</string>
+    <string name="emergency_sos">Emergency SOS</string>
+    <string name="event_logs">Event Logs</string>
+    <string name="settings">Settings</string>
+    <string name="total_events">Total Events</string>
+    <string name="sos_sent">SOS Sent</string>
+    <string name="emergency_contacts">Emergency Contacts</string>
+    
+    <!-- Event Logs -->
+    <string name="logs_title">Event Logs</string>
+    <string name="no_events">No events recorded</string>
+    <string name="event_type">Event Type</string>
+    <string name="event_time">Time</string>
+    <string name="event_location">Location</string>
+    <string name="event_confidence">Confidence</string>
+    
+    <!-- Event Types -->
+    <string name="event_road_accident">Road Accident</string>
+    <string name="event_fall">Fall Detected</string>
+    <string name="event_assault">Possible Assault</string>
+    <string name="event_inactivity">Inactivity Alert</string>
+    <string name="event_voice_trigger">Voice Emergency</string>
+    <string name="event_manual_sos">Manual SOS</string>
+    <string name="event_high_risk_zone">High Risk Zone</string>
+    
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_profile">Profile</string>
+    <string name="settings_gender">Gender</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_language">App Language</string>
+    <string name="settings_select_language">Select Language</string>
+    <string name="language_system_default">System default</string>
+    <string name="settings_no_contacts">No emergency contacts added</string>
+    <string name="settings_add_contacts_hint">Add at least 2 contacts for emergency SOS</string>
+    <string name="settings_statistics">Statistics</string>
+    <string name="settings_events_detected">Detected safety events</string>
+    <string name="settings_emergency_messages_sent">Emergency messages sent</string>
+    <string name="settings_contacts_configured">%1$d contacts configured</string>
+    <string name="settings_safety_zones">Safety Zones</string>
+    <string name="settings_accident_hotspots">Accident Hotspots</string>
+    <string name="settings_unsafe_zones">Unsafe Zones</string>
+    <string name="settings_zones_loaded">%1$d zones loaded</string>
+    <string name="settings_view_on_risk_map">View on Risk Map</string>
+    <string name="settings_offline_first">Offline-first Safety Application</string>
+    <string name="settings_user_manual">User Manual</string>
+    <string name="settings_user_manual_desc">Learn about all features</string>
+    <string name="settings_open_user_manual">Open User Manual</string>
+    <string name="settings_general">General</string>
+    <string name="settings_safety">Safety</string>
+    <string name="settings_about">About</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_description">Enable dark theme</string>
+    <string name="voice_trigger">Voice Trigger</string>
+    <string name="voice_trigger_description">Enable voice emergency keywords</string>
+    <string name="change_gender">Change Gender</string>
+    <string name="manage_contacts">Manage Emergency Contacts</string>
+    <string name="app_version">App Version</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_safety">Safety Monitoring</string>
+    <string name="notification_channel_emergency">Emergency Alerts</string>
+    <string name="notification_title_monitoring">SafePulse Active</string>
+    <string name="notification_text_monitoring">Monitoring your safety</string>
+    <string name="notification_title_high_risk">High Risk Zone</string>
+    <string name="notification_text_high_risk">You are in a high-risk area. Stay alert!</string>
+    <string name="notification_emergency_countdown">Emergency detected! Sending SOS in %1$d seconds</string>
+    <string name="notification_heightened_mode">Heightened safety mode activated</string>
+    
+    <!-- Permissions -->
+    <string name="permission_location_title">Location Permission</string>
+    <string name="permission_location_message">SafePulse needs your location to detect safety risks</string>
+    <string name="permission_sms_title">SMS Permission</string>
+    <string name="permission_sms_message">Required to send emergency messages</string>
+    <string name="permission_call_title">Call Permission</string>
+    <string name="permission_call_message">Required to make emergency calls</string>
+    
+    <!-- Errors -->
+    <string name="error_no_contacts">Please add at least 2 emergency contacts</string>
+    <string name="error_invalid_phone">Invalid phone number</string>
+    <string name="error_permission_denied">Permission denied. App will work with limited functionality</string>
+
+    <!-- Extracted UI Strings -->
+    <string name="extracted_quick_distances">Quick distances:</string>
+    <string name="extracted_1km">1km</string>
+    <string name="extracted_2km">2km</string>
+    <string name="extracted_5km">5km</string>
+    <string name="extracted_popular_destinations">Popular destinations:</string>
+    <string name="extracted_nearby_2km_away">Nearby (~2km away)</string>
+    <string name="extracted_searching">Searching...</string>
+    <string name="extracted_search">Search</string>
+    <string name="extracted_safe_routes">Safe Routes</string>
+    <string name="extracted_dismiss">Dismiss</string>
+    <string name="extracted_search_destination">Search Destination</string>
+    <string name="extracted_address_or_place_name">Address or place name</string>
+    <string name="extracted_eg_mumbai_airport_bandra">e.g., Mumbai Airport, Bandra</string>
+    <string name="extracted_location_permission_needed">Location permission needed</string>
+    <string name="extracted_tap_for_routes">Tap for routes</string>
+    <string name="extracted_enter_any_location">Enter any location:</string>
+    <string name="extracted_place_or_address">Place or address</string>
+    <string name="extracted_eg_mumbai_airport">e.g., Mumbai Airport</string>
+    <string name="extracted_quick_options">Quick options:</string>
+    <string name="extracted_test_mode">TEST MODE</string>
+    <string name="extracted_safest">Safest</string>
+    <string name="extracted_legend">Legend</string>
+    <string name="extracted_skip">Skip</string>
+    <string name="extracted_risk_map">Risk Map</string>
+    <string name="extracted_location_permission_required">Location permission required</string>
+    <string name="extracted_grant_permission">Grant Permission</string>
+    <string name="extracted_your_area_risk_analysis">Your Area Risk Analysis</string>
+    <string name="extracted_nearby_crime_zones">Nearby Crime Zones:</string>
+    <string name="extracted_nearby_disaster_zones">Nearby Disaster Zones:</string>
+    <string name="extracted_safe_route_suggestions">Safe Route Suggestions</string>
+    <string name="extracted_find_safe_route">Find Safe Route</string>
+    <string name="extracted_select_a_destination_to_get_the_safest_route_based_on_crime_and_disaster_data">Select a destination to get the safest route based on crime and disaster data:</string>
+    <string name="extracted_nearby_2km_away_1">Nearby (~2km away)</string>
+    <string name="extracted_tap_to_search_destination">Tap to search destination</string>
+    <string name="extracted_event_history">Event History</string>
+    <string name="extracted_no_events_yet">No Events Yet</string>
+    <string name="extracted_safety_events_will_appear_here">Safety events will appear here</string>
+    <string name="extracted_test_voice_trigger_demo">Test Voice Trigger (Demo)</string>
+    <string name="extracted_quick_actions">Quick Actions</string>
+    <string name="extracted_crime_disaster_zones">Crime &amp; Disaster Zones</string>
+    <string name="extracted_find_safest_path">Find Safest Path</string>
+    <string name="extracted_monitoring_in_background">Monitoring in background</string>
+    <string name="extracted_mode">Mode</string>
+    <string name="extracted_voice_trigger_demo">Voice Trigger Demo</string>
+    <string name="extracted_this_simulates_voice_keyword_detection_type_a_phrase_containing_trigger_words">This simulates voice keyword detection. Type a phrase containing trigger words:</string>
+    <string name="extracted_enter_phrase">Enter phrase</string>
+    <string name="extracted_test">Test</string>
+    <string name="extracted_set_as_primary_contact">Set as primary contact</string>
+    <string name="extracted_your_complete_guide_to_staying_safe">Your complete guide to staying safe</string>
+    <string name="extracted_stay_safe_with_safepulse">Stay Safe with SafePulse</string>
+    <string name="extracted_version_100">Version 1.0.0</string>
+    <!-- Home Screen specific strings -->
+    <string name="home_sos_active">ACTIVE</string>
+    <string name="home_sos_start">START</string>
+    <string name="home_protection_active">Protection Active</string>
+    <string name="home_tap_to_start">Tap to Start Protection</string>
+    <string name="home_quick_action_manual_sos">Manual\nSOS</string>
+    <string name="home_quick_action_fake_call">Fake\nCall</string>
+    <string name="home_quick_action_silent_alert">Silent\nAlert</string>
+    <string name="voice_trigger_hint">Say \"Help\" or \"Emergency\" to trigger SOS</string>
+    <!-- Settings hardcoded strings -->
+    <string name="settings_about_title">About</string>
+    <string name="settings_add_contact_title">Add Emergency Contact</string>
+    <string name="settings_contact_name_hint">Name</string>
+    <string name="settings_contact_phone_hint">Phone Number (10 digits)</string>
+    <string name="settings_safety_zone_title">Safety Zones</string>
+    <string name="settings_accident_hotspot_label">Accident Hotspots</string>
+    <string name="settings_unsafe_zone_label">Unsafe Zones</string>
+    <!-- Event Logs hardcoded strings -->
+    <string name="event_history_title">Event History</string>
+    <string name="fake_call_caller_name">Mom</string>
+    <string name="tutorial_sos_button_title">SOS Button</string>
+    <string name="tutorial_sos_button_description">Press and hold this button to immediately send an SOS alert with your location to all emergency contacts.</string>
+    <string name="tutorial_safety_status_title">Safety Status</string>
+    <string name="tutorial_safety_status_description">This shows your current safety mode. It switches automatically based on your location and sensor data.</string>
+    <string name="tutorial_quick_actions_title">Quick Actions</string>
+    <string name="tutorial_quick_actions_description">Use these shortcuts to quickly access Fake Call, Silent Alert, and other safety features.</string>
+    <string name="tutorial_risk_map_title">Risk Map</string>
+    <string name="tutorial_risk_map_description">View a heatmap of accident hotspots and unsafe zones near you for safer navigation.</string>
+    <string name="tutorial_safe_routes_title">Safe Routes</string>
+    <string name="tutorial_safe_routes_description">Plan routes that avoid high-risk areas. Always prefer safety over speed.</string>
+</resources>

@@ -1,0 +1,222 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    
+    <string name="app_name">SafePulse</string>
+    
+    
+    <string name="action_ok">ठीक है</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_save">सहेजें</string>
+    <string name="action_back">वापस</string>
+    <string name="action_next">आगे</string>
+    <string name="action_complete">पूर्ण करें</string>
+    <string name="action_add">जोड़ें</string>
+    <string name="action_close">बंद करें</string>
+    <string name="action_delete">हटाएं</string>
+    
+    
+    <string name="onboarding_title">SafePulse में आपका स्वागत है</string>
+    <string name="onboarding_subtitle">आपका व्यक्तिगत सुरक्षा साथी</string>
+    <string name="onboarding_language_title">ऐप की भाषा चुनें</string>
+    <string name="onboarding_language_subtitle">अपनी पसंदीदा भाषा चुनें। आप इसे बाद में सेटिंग्स में बदल सकते हैं।</string>
+    <string name="onboarding_gender_title">लिंग चुनें</string>
+    <string name="onboarding_gender_subtitle">यह महिला सुरक्षा सुविधाओं को सक्रिय करने में मदद करता है</string>
+    <string name="gender_male">पुरुष</string>
+    <string name="gender_female">महिला</string>
+    <string name="gender_other">अन्य</string>
+    <string name="onboarding_contacts_title">आपातकालीन संपर्क</string>
+    <string name="onboarding_contacts_subtitle">कम से कम 2 आपातकालीन संपर्क जोड़ें</string>
+    <string name="add_contact">संपर्क जोड़ें</string>
+    <string name="contact_name">नाम</string>
+    <string name="contact_phone">फोन नंबर</string>
+    <string name="set_as_primary">प्राथमिक संपर्क के रूप में सेट करें</string>
+    <string name="onboarding_voice_title">वॉयस ट्रिगर</string>
+    <string name="onboarding_voice_subtitle">वॉयस आपातकालीन कीवर्ड डिटेक्शन सक्षम करें</string>
+    <string name="enable_voice_trigger">वॉयस ट्रिगर सक्षम करें</string>
+    <string name="onboarding_complete">शुरू करें</string>
+    <string name="onboarding_contacts_count">%1$d/2 न्यूनतम संपर्क जोड़े गए</string>
+    <string name="primary_badge">मुख्य</string>
+    <string name="remove_contact">संपर्क हटाएं</string>
+    <string name="add_emergency_contact">आपातकालीन संपर्क जोड़ें</string>
+    <string name="contact_phone_hint">फोन नंबर (10 अंक)</string>
+    <string name="contact_digits_count">%1$d/10 अंक</string>
+    <string name="error_enter_name">कृपया नाम दर्ज करें</string>
+    <string name="error_enter_phone">कृपया फोन नंबर दर्ज करें</string>
+    <string name="error_phone_10_digits">फोन नंबर ठीक 10 अंकों का होना चाहिए</string>
+    <string name="error_phone_digits_only">फोन नंबर में केवल अंक होने चाहिए</string>
+    <string name="voice_emergency_trigger_title">वॉयस आपातकाल ट्रिगर</string>
+    <string name="voice_emergency_trigger_hint">SOS ट्रिगर करने के लिए \"Help\", \"Save me\", या \"Emergency\" बोलें</string>
+    <string name="voice_trigger_disclaimer">इस सुविधा के लिए माइक्रोफोन अनुमति आवश्यक है और सेफ्टी मोड सक्रिय होने पर यह कीवर्ड सुनेगी।</string>
+    
+    
+    <string name="home_title">SafePulse</string>
+    <string name="safety_service">सुरक्षा सेवा</string>
+    <string name="service_running">सेवा चल रही है</string>
+    <string name="service_stopped">सेवा रुकी हुई है</string>
+    <string name="start_monitoring">निगरानी शुरू करें</string>
+    <string name="stop_monitoring">निगरानी रोकें</string>
+    <string name="risk_level">जोखिम स्तर</string>
+    <string name="risk_low">कम</string>
+    <string name="risk_medium">मध्यम</string>
+    <string name="risk_high">उच्च</string>
+    <string name="safety_mode">सुरक्षा मोड</string>
+    <string name="mode_normal">सामान्य</string>
+    <string name="mode_heightened">उच्च</string>
+    <string name="emergency_sos">आपातकालीन SOS</string>
+    <string name="event_logs">घटना लॉग</string>
+    <string name="settings">सेटिंग्स</string>
+    <string name="total_events">कुल घटनाएं</string>
+    <string name="sos_sent">SOS भेजा गया</string>
+    <string name="emergency_contacts">आपातकालीन संपर्क</string>
+    
+    
+    <string name="logs_title">घटना लॉग</string>
+    <string name="no_events">कोई घटना दर्ज नहीं</string>
+    <string name="event_type">घटना प्रकार</string>
+    <string name="event_time">समय</string>
+    <string name="event_location">स्थान</string>
+    <string name="event_confidence">विश्वास</string>
+    
+    
+    <string name="event_road_accident">सड़क दुर्घटना</string>
+    <string name="event_fall">गिरने का पता चला</string>
+    <string name="event_assault">संभावित हमला</string>
+    <string name="event_inactivity">निष्क्रियता चेतावनी</string>
+    <string name="event_voice_trigger">वॉयस आपातकाल</string>
+    <string name="event_manual_sos">मैनुअल SOS</string>
+    <string name="event_high_risk_zone">उच्च जोखिम क्षेत्र</string>
+    
+    
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_profile">प्रोफाइल</string>
+    <string name="settings_gender">लिंग</string>
+    <string name="settings_appearance">दिखावट</string>
+    <string name="settings_language">ऐप भाषा</string>
+    <string name="settings_select_language">भाषा चुनें</string>
+    <string name="language_system_default">सिस्टम डिफॉल्ट</string>
+    <string name="settings_no_contacts">कोई आपातकालीन संपर्क जोड़ा नहीं गया</string>
+    <string name="settings_add_contacts_hint">आपातकालीन SOS के लिए कम से कम 2 संपर्क जोड़ें</string>
+    <string name="settings_statistics">आंकड़े</string>
+    <string name="settings_events_detected">पहचानी गई सुरक्षा घटनाएं</string>
+    <string name="settings_emergency_messages_sent">आपातकालीन संदेश भेजे गए</string>
+    <string name="settings_contacts_configured">%1$d संपर्क कॉन्फ़िगर किए गए</string>
+    <string name="settings_safety_zones">सुरक्षा क्षेत्र</string>
+    <string name="settings_accident_hotspots">दुर्घटना हॉटस्पॉट</string>
+    <string name="settings_unsafe_zones">असुरक्षित क्षेत्र</string>
+    <string name="settings_zones_loaded">%1$d क्षेत्र लोड किए गए</string>
+    <string name="settings_view_on_risk_map">रिस्क मैप पर देखें</string>
+    <string name="settings_offline_first">ऑफलाइन-फर्स्ट सुरक्षा एप्लिकेशन</string>
+    <string name="settings_user_manual">उपयोगकर्ता मार्गदर्शिका</string>
+    <string name="settings_user_manual_desc">सभी फीचर्स के बारे में जानें</string>
+    <string name="settings_open_user_manual">उपयोगकर्ता मार्गदर्शिका खोलें</string>
+    <string name="settings_general">सामान्य</string>
+    <string name="settings_safety">सुरक्षा</string>
+    <string name="settings_about">के बारे में</string>
+    <string name="dark_mode">डार्क मोड</string>
+    <string name="dark_mode_description">डार्क थीम सक्षम करें</string>
+    <string name="voice_trigger">वॉयस ट्रिगर</string>
+    <string name="voice_trigger_description">वॉयस आपातकालीन कीवर्ड सक्षम करें</string>
+    <string name="change_gender">लिंग बदलें</string>
+    <string name="manage_contacts">आपातकालीन संपर्क प्रबंधित करें</string>
+    <string name="app_version">ऐप संस्करण</string>
+    
+    
+    <string name="notification_channel_safety">सुरक्षा निगरानी</string>
+    <string name="notification_channel_emergency">आपातकालीन अलर्ट</string>
+    <string name="notification_title_monitoring">SafePulse सक्रिय</string>
+    <string name="notification_text_monitoring">आपकी सुरक्षा की निगरानी कर रहा है</string>
+    <string name="notification_title_high_risk">उच्च जोखिम क्षेत्र</string>
+    <string name="notification_text_high_risk">आप उच्च जोखिम वाले क्षेत्र में हैं। सतर्क रहें!</string>
+    <string name="notification_emergency_countdown">आपातकाल का पता चला! %1$d सेकंड में SOS भेजा जा रहा है</string>
+    <string name="notification_heightened_mode">उच्च सुरक्षा मोड सक्रिय</string>
+    
+    
+    <string name="permission_location_title">स्थान अनुमति</string>
+    <string name="permission_location_message">SafePulse को सुरक्षा जोखिमों का पता लगाने के लिए आपके स्थान की आवश्यकता है</string>
+    <string name="permission_sms_title">SMS अनुमति</string>
+    <string name="permission_sms_message">आपातकालीन संदेश भेजने के लिए आवश्यक</string>
+    <string name="permission_call_title">कॉल अनुमति</string>
+    <string name="permission_call_message">आपातकालीन कॉल करने के लिए आवश्यक</string>
+    
+    
+    <string name="error_no_contacts">कृपया कम से कम 2 आपातकालीन संपर्क जोड़ें</string>
+    <string name="error_invalid_phone">अमान्य फोन नंबर</string>
+    <string name="error_permission_denied">अनुमति अस्वीकृत। ऐप सीमित कार्यक्षमता के साथ काम करेगा</string>
+<string name="extracted_1km">1 कि.मी</string>
+    <string name="extracted_2km">2 किमी</string>
+    <string name="extracted_5km">5 कि.मी</string>
+    <string name="extracted_popular_destinations">लोकप्रिय गंतव्य:</string>
+    <string name="extracted_nearby_2km_away">निकटवर्ती (~2 किमी दूर)</string>
+    <string name="extracted_searching">खोज रहे हैं...</string>
+    <string name="extracted_search">खोज</string>
+    <string name="extracted_safe_routes">सुरक्षित मार्ग</string>
+    <string name="extracted_dismiss">नकार देना</string>
+    <string name="extracted_search_destination">गंतव्य खोजें</string>
+    <string name="extracted_address_or_place_name">पता या स्थान का नाम</string>
+    <string name="extracted_eg_mumbai_airport_bandra">उदाहरण के लिए, मुंबई हवाई अड्डा, बांद्रा</string>
+    <string name="extracted_location_permission_needed">स्थान की अनुमति आवश्यक है</string>
+    <string name="extracted_tap_for_routes">मार्गों के लिए टैप करें</string>
+    <string name="extracted_enter_any_location">कोई भी स्थान दर्ज करें:</string>
+    <string name="extracted_place_or_address">स्थान या पता</string>
+    <string name="extracted_eg_mumbai_airport">उदाहरण के लिए, मुंबई हवाई अड्डा</string>
+    <string name="extracted_quick_options">त्वरित विकल्प:</string>
+    <string name="extracted_test_mode">परीक्षण मोड</string>
+    <string name="extracted_safest">सबसे सुरक्षित</string>
+    <string name="extracted_legend">दंतकथा</string>
+    <string name="extracted_skip">छोडना</string>
+    <string name="extracted_risk_map">जोखिम मानचित्र</string>
+    <string name="extracted_location_permission_required">स्थान की अनुमति आवश्यक है</string>
+    <string name="extracted_grant_permission">अनुमति प्रदान करें</string>
+    <string name="extracted_your_area_risk_analysis">आपका क्षेत्र जोखिम विश्लेषण</string>
+    <string name="extracted_nearby_crime_zones">निकटवर्ती अपराध क्षेत्र:</string>
+    <string name="extracted_nearby_disaster_zones">निकटवर्ती आपदा क्षेत्र:</string>
+    <string name="extracted_safe_route_suggestions">सुरक्षित मार्ग सुझाव</string>
+    <string name="extracted_find_safe_route">सुरक्षित मार्ग खोजें</string>
+    <string name="extracted_select_a_destination_to_get_the_safest_route_based_on_crime_and_disaster_data">अपराध और आपदा डेटा के आधार पर सबसे सुरक्षित मार्ग पाने के लिए एक गंतव्य चुनें:</string>
+    <string name="extracted_nearby_2km_away_1">निकटवर्ती (~2 किमी दूर)</string>
+    <string name="extracted_tap_to_search_destination">गंतव्य खोजने के लिए टैप करें</string>
+    <string name="extracted_event_history">घटना इतिहास</string>
+    <string name="extracted_no_events_yet">अभी तक कोई इवेंट नहीं</string>
+    <string name="extracted_safety_events_will_appear_here">सुरक्षा इवेंट यहां दिखाई देंगे</string>
+    <string name="extracted_test_voice_trigger_demo">टेस्ट वॉयस ट्रिगर (डेमो)</string>
+    <string name="extracted_quick_actions">त्वरित कार्रवाई</string>
+    <string name="extracted_crime_disaster_zones">अपराध एवं आपदा क्षेत्र</string>
+    <string name="extracted_find_safest_path">सबसे सुरक्षित रास्ता खोजें</string>
+    <string name="extracted_monitoring_in_background">पृष्ठभूमि में निगरानी</string>
+    <string name="extracted_mode">तरीका</string>
+    <string name="extracted_voice_trigger_demo">वॉयस ट्रिगर डेमो</string>
+    <string name="extracted_this_simulates_voice_keyword_detection_type_a_phrase_containing_trigger_words">यह ध्वनि कीवर्ड पहचान का अनुकरण करता है। ट्रिगर शब्दों वाला एक वाक्यांश टाइप करें:</string>
+    <string name="extracted_enter_phrase">वाक्यांश दर्ज करें</string>
+    <string name="extracted_test">परीक्षा</string>
+    <string name="extracted_set_as_primary_contact">प्राथमिक संपर्क के रूप में सेट करें</string>
+    <string name="extracted_your_complete_guide_to_staying_safe">सुरक्षित रहने के लिए आपकी संपूर्ण मार्गदर्शिका</string>
+    <string name="extracted_stay_safe_with_safepulse">सेफपल्स के साथ सुरक्षित रहें</string>
+    <string name="extracted_version_100">संस्करण 1.0.0</string>
+    <string name="home_sos_active">सक्रिय</string>
+    <string name="home_sos_start">शुरू</string>
+    <string name="home_protection_active">सुरक्षा सक्रिय</string>
+    <string name="home_tap_to_start">सुरक्षा प्रारंभ करने के लिए टैप करें</string>
+    <string name="home_quick_action_manual_sos">मैनुअल\nएसओएस</string>
+    <string name="home_quick_action_fake_call">फर्जी\nकॉल</string>
+    <string name="home_quick_action_silent_alert">मौन\nचेतावनी</string>
+    <string name="voice_trigger_hint">एसओएस ट्रिगर करने के लिए "मदद" या "आपातकालीन" कहें</string>
+    <string name="settings_about_title">के बारे में</string>
+    <string name="settings_add_contact_title">आपातकालीन संपर्क जोड़ें</string>
+    <string name="settings_contact_name_hint">नाम</string>
+    <string name="settings_contact_phone_hint">फ़ोन नंबर (10 अंक)</string>
+    <string name="settings_safety_zone_title">सुरक्षा क्षेत्र</string>
+    <string name="settings_accident_hotspot_label">दुर्घटना हॉटस्पॉट</string>
+    <string name="settings_unsafe_zone_label">असुरक्षित क्षेत्र</string>
+    <string name="event_history_title">घटना इतिहास</string>
+    <string name="fake_call_caller_name">माँ</string>
+    <string name="tutorial_sos_button_title">SOS बटन</string>
+    <string name="tutorial_sos_button_description">अपने स्थान के साथ SOS अलर्ट तुरंत सभी आपातकालीन संपर्कों को भेजने के लिए इस बटन को दबाकर रखें।</string>
+    <string name="tutorial_safety_status_title">सुरक्षा स्थिति</string>
+    <string name="tutorial_safety_status_description">यह आपका वर्तमान सुरक्षा मोड दिखाता है। यह आपके स्थान और सेंसर डेटा के आधार पर अपने आप बदलता है।</string>
+    <string name="tutorial_quick_actions_title">त्वरित क्रियाएं</string>
+    <string name="tutorial_quick_actions_description">फेक कॉल, साइलेंट अलर्ट और अन्य सुरक्षा सुविधाओं तक जल्दी पहुंचने के लिए इन शॉर्टकट्स का उपयोग करें।</string>
+    <string name="tutorial_risk_map_title">जोखिम मानचित्र</string>
+    <string name="tutorial_risk_map_description">सुरक्षित नेविगेशन के लिए अपने आसपास के दुर्घटना हॉटस्पॉट और असुरक्षित क्षेत्रों का हीटमैप देखें।</string>
+    <string name="tutorial_safe_routes_title">सुरक्षित मार्ग</string>
+    <string name="tutorial_safe_routes_description">उच्च-जोखिम क्षेत्रों से बचने वाले मार्ग चुनें। हमेशा गति से पहले सुरक्षा को प्राथमिकता दें।</string>
+    </resources>

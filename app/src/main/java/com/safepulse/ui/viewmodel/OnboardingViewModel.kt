@@ -1,0 +1,151 @@
+package com.safepulse.ui.viewmodel
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.safepulse.SafePulseApplication
+import com.safepulse.data.db.entity.EmergencyContactEntity
+import com.safepulse.data.prefs.UserPreferences
+import com.safepulse.data.repository.EmergencyContactRepository
+import com.safepulse.domain.model.Gender
+import com.safepulse.utils.LocaleManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
+data class OnboardingState(
+    val currentStep: Int = 0,
+    val languageCode: String = LocaleManager.SYSTEM_LANGUAGE_CODE,
+    val gender: Gender = Gender.UNSPECIFIED,
+    val contacts: List<EmergencyContactEntity> = emptyList(),
+    val voiceTriggerEnabled: Boolean = false,
+    val isComplete: Boolean = false,
+    val error: String? = null
+)
+
+class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
+    
+    private val app = application as SafePulseApplication
+    private val contactRepository = EmergencyContactRepository(app.database.emergencyContactDao())
+    private val userPreferences = UserPreferences(application)
+    
+    private val _state = MutableStateFlow(OnboardingState())
+    val state: StateFlow<OnboardingState> = _state.asStateFlow()
+    
+    init {
+        loadPreferences()
+        loadExistingContacts()
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            val settings = userPreferences.userSettingsFlow.first()
+            val languageCode = userPreferences.appLanguageCodeFlow.first()
+            _state.value = _state.value.copy(
+                gender = settings.gender,
+                voiceTriggerEnabled = settings.voiceTriggerEnabled,
+                languageCode = languageCode
+            )
+        }
+    }
+    
+    private fun loadExistingContacts() {
+        viewModelScope.launch {
+            contactRepository.getAllContacts().collect { contacts ->
+                _state.value = _state.value.copy(contacts = contacts)
+            }
+        }
+    }
+    
+    fun setGender(gender: Gender) {
+        viewModelScope.launch {
+            userPreferences.setGender(gender)
+            _state.value = _state.value.copy(gender = gender)
+        }
+    }
+
+    fun setLanguage(languageCode: String) {
+        val normalized = LocaleManager.normalize(languageCode)
+        LocaleManager.applyLanguage(normalized)
+        viewModelScope.launch {
+            userPreferences.setAppLanguageCode(normalized)
+            _state.value = _state.value.copy(languageCode = normalized)
+        }
+    }
+    
+    fun addContact(name: String, phone: String, isPrimary: Boolean = false) {
+        if (name.isBlank() || phone.isBlank()) {
+            _state.value = _state.value.copy(error = "Name and phone are required")
+            return
+        }
+        
+        viewModelScope.launch {
+            val contact = EmergencyContactEntity(
+                name = name.trim(),
+                phone = phone.trim(),
+                isPrimary = isPrimary || _state.value.contacts.isEmpty()
+            )
+            contactRepository.insert(contact)
+            _state.value = _state.value.copy(error = null)
+        }
+    }
+    
+    fun removeContact(contact: EmergencyContactEntity) {
+        viewModelScope.launch {
+            contactRepository.delete(contact)
+        }
+    }
+    
+    fun setVoiceTriggerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setVoiceTriggerEnabled(enabled)
+            _state.value = _state.value.copy(voiceTriggerEnabled = enabled)
+        }
+    }
+    
+    fun nextStep() {
+        val current = _state.value.currentStep
+        when (current) {
+            1 -> { // Gender step
+                if (_state.value.gender == Gender.UNSPECIFIED) {
+                    _state.value = _state.value.copy(error = "Please select gender")
+                    return
+                }
+            }
+            2 -> { // Contacts step
+                if (_state.value.contacts.size < 2) {
+                    _state.value = _state.value.copy(error = "Add at least 2 emergency contacts")
+                    return
+                }
+            }
+        }
+        
+        if (current < 3) {
+            _state.value = _state.value.copy(currentStep = current + 1, error = null)
+        } else {
+            completeOnboarding()
+        }
+    }
+    
+    fun previousStep() {
+        if (_state.value.currentStep > 0) {
+            _state.value = _state.value.copy(
+                currentStep = _state.value.currentStep - 1,
+                error = null
+            )
+        }
+    }
+    
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            userPreferences.setOnboardingComplete(true)
+            _state.value = _state.value.copy(isComplete = true)
+        }
+    }
+    
+    fun clearError() {
+        _state.value = _state.value.copy(error = null)
+    }
+}

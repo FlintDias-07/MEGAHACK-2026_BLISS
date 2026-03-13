@@ -1,0 +1,211 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    
+    <string name="app_name">సేఫ్‌పల్స్</string>
+    
+    
+    <string name="action_ok">సరే</string>
+    <string name="action_cancel">రద్దు చేయి</string>
+    <string name="action_save">సేవ్ చేయండి</string>
+    <string name="action_back">వెనుకకు</string>
+    <string name="action_next">తదుపరి</string>
+    <string name="action_complete">పూర్తి</string>
+    <string name="action_add">జోడించు</string>
+    <string name="action_close">మూసివేయి</string>
+    <string name="action_delete">తొలగించు</string>
+    
+    
+    <string name="onboarding_title">SafePulseకి స్వాగతం</string>
+    <string name="onboarding_subtitle">మీ వ్యక్తిగత భద్రత సహచరుడు</string>
+    <string name="onboarding_language_title">యాప్ భాషను ఎంచుకోండి</string>
+    <string name="onboarding_language_subtitle">మీకు ఇష్టమైన భాషను ఎంచుకోండి. మీరు దీన్ని తర్వాత సెట్టింగ్‌లలో మార్చవచ్చు.</string>
+    <string name="onboarding_gender_title">లింగాన్ని ఎంచుకోండి</string>
+    <string name="onboarding_gender_subtitle">ఇది మీ కోసం భద్రతా లక్షణాలను అనుకూలీకరించడంలో మాకు సహాయపడుతుంది</string>
+    <string name="gender_male">పురుషుడు</string>
+    <string name="gender_female">స్త్రీ</string>
+    <string name="gender_other">ఇతర</string>
+    <string name="onboarding_contacts_title">అత్యవసర పరిచయాలు</string>
+    <string name="onboarding_contacts_subtitle">కనీసం 2 అత్యవసర పరిచయాలను జోడించండి</string>
+    <string name="add_contact">పరిచయాన్ని జోడించండి</string>
+    <string name="contact_name">పేరు</string>
+    <string name="contact_phone">ఫోన్ నంబర్</string>
+    <string name="set_as_primary">ప్రైమరీ కాంటాక్ట్‌గా సెట్ చేయండి</string>
+    <string name="onboarding_voice_title">వాయిస్ ట్రిగ్గర్</string>
+    <string name="onboarding_voice_subtitle">వాయిస్ అత్యవసర కీవర్డ్ గుర్తింపును ప్రారంభించండి</string>
+    <string name="enable_voice_trigger">వాయిస్ ట్రిగ్గర్‌ని ప్రారంభించండి</string>
+    <string name="onboarding_complete">ప్రారంభించండి</string>
+    <string name="onboarding_contacts_count">%1$d/2 కనీస పరిచయాలు జోడించబడ్డాయి</string>
+    <string name="primary_badge">ప్రాథమిక</string>
+    <string name="remove_contact">పరిచయాన్ని తీసివేయండి</string>
+    <string name="add_emergency_contact">అత్యవసర పరిచయాన్ని జోడించండి</string>
+    <string name="contact_phone_hint">ఫోన్ నంబర్ (10 అంకెలు)</string>
+    <string name="contact_digits_count">%1$d/10 అంకెలు</string>
+    <string name="error_enter_name">దయచేసి పేరును నమోదు చేయండి</string>
+    <string name="error_enter_phone">దయచేసి ఫోన్ నంబర్‌ను నమోదు చేయండి</string>
+    <string name="error_phone_10_digits">ఫోన్ నంబర్ ఖచ్చితంగా 10 అంకెలు ఉండాలి</string>
+    <string name="error_phone_digits_only">ఫోన్ నంబర్ తప్పనిసరిగా అంకెలను మాత్రమే కలిగి ఉండాలి</string>
+    <string name="voice_emergency_trigger_title">వాయిస్ ఎమర్జెన్సీ ట్రిగ్గర్</string>
+    <string name="voice_emergency_trigger_hint">SOSని ట్రిగ్గర్ చేయడానికి \"సహాయం\", \"నన్ను రక్షించు\" లేదా \"అత్యవసరం\" చెప్పండి</string>
+    <string name="voice_trigger_disclaimer">ఈ ఫీచర్‌కి మైక్రోఫోన్ అనుమతి అవసరం మరియు సేఫ్టీ మోడ్ యాక్టివ్‌గా ఉన్నప్పుడు కీలకపదాలను వింటుంది.</string>
+    
+    
+    <string name="home_title">సేఫ్‌పల్స్</string>
+    <string name="safety_service">భద్రతా సేవ</string>
+    <string name="service_running">సర్వీస్ రన్నింగ్</string>
+    <string name="service_stopped">సేవ నిలిచిపోయింది</string>
+    <string name="start_monitoring">పర్యవేక్షణ ప్రారంభించండి</string>
+    <string name="stop_monitoring">పర్యవేక్షణను ఆపండి</string>
+    <string name="risk_level">ప్రమాద స్థాయి</string>
+    <string name="risk_low">తక్కువ</string>
+    <string name="risk_medium">మధ్యస్థం</string>
+    <string name="risk_high">అధిక</string>
+    <string name="safety_mode">భద్రతా మోడ్</string>
+    <string name="mode_normal">సాధారణ</string>
+    <string name="mode_heightened">పెంచారు</string>
+    <string name="emergency_sos">అత్యవసర SOS</string>
+    <string name="event_logs">ఈవెంట్ లాగ్‌లు</string>
+    <string name="settings">సెట్టింగ్‌లు</string>
+    <string name="total_events">మొత్తం ఈవెంట్‌లు</string>
+    <string name="sos_sent">SOS పంపబడింది</string>
+    <string name="emergency_contacts">అత్యవసర పరిచయాలు</string>
+    
+    
+    <string name="logs_title">ఈవెంట్ లాగ్‌లు</string>
+    <string name="no_events">ఈవెంట్‌లు నమోదు చేయబడలేదు</string>
+    <string name="event_type">ఈవెంట్ రకం</string>
+    <string name="event_time">సమయం</string>
+    <string name="event_location">స్థానం</string>
+    <string name="event_confidence">విశ్వాసం</string>
+    
+    
+    <string name="event_road_accident">రోడ్డు ప్రమాదం</string>
+    <string name="event_fall">పతనం గుర్తించబడింది</string>
+    <string name="event_assault">సాధ్యమైన దాడి</string>
+    <string name="event_inactivity">ఇనాక్టివిటీ అలర్ట్</string>
+    <string name="event_voice_trigger">వాయిస్ ఎమర్జెన్సీ</string>
+    <string name="event_manual_sos">మాన్యువల్ SOS</string>
+    <string name="event_high_risk_zone">హై రిస్క్ జోన్</string>
+    
+    
+    <string name="settings_title">సెట్టింగ్‌లు</string>
+    <string name="settings_profile">ప్రొఫైల్</string>
+    <string name="settings_appearance">స్వరూపం</string>
+    <string name="settings_language">యాప్ భాష</string>
+    <string name="settings_select_language">భాషను ఎంచుకోండి</string>
+    <string name="language_system_default">సిస్టమ్ డిఫాల్ట్</string>
+    <string name="settings_no_contacts">అత్యవసర పరిచయాలు ఏవీ జోడించబడలేదు</string>
+    <string name="settings_add_contacts_hint">అత్యవసర SOS కోసం కనీసం 2 పరిచయాలను జోడించండి</string>
+    <string name="settings_statistics">గణాంకాలు</string>
+    <string name="settings_events_detected">భద్రతా సంఘటనలు గుర్తించబడ్డాయి</string>
+    <string name="settings_emergency_messages_sent">అత్యవసర సందేశాలు పంపబడ్డాయి</string>
+    <string name="settings_contacts_configured">%1$d పరిచయాలు కాన్ఫిగర్ చేయబడ్డాయి</string>
+    <string name="settings_safety_zones">భద్రతా మండలాలు</string>
+    <string name="settings_accident_hotspots">ప్రమాద హాట్‌స్పాట్‌లు</string>
+    <string name="settings_unsafe_zones">అసురక్షిత మండలాలు</string>
+    <string name="settings_zones_loaded">%1$d జోన్‌లు లోడ్ చేయబడ్డాయి</string>
+    <string name="settings_view_on_risk_map">రిస్క్ మ్యాప్‌లో వీక్షించండి</string>
+    <string name="settings_offline_first">ఆఫ్‌లైన్-మొదటి భద్రతా అప్లికేషన్</string>
+    <string name="settings_user_manual">వినియోగదారు మాన్యువల్</string>
+    <string name="settings_user_manual_desc">అన్ని లక్షణాల గురించి తెలుసుకోండి</string>
+    <string name="settings_open_user_manual">వినియోగదారు మాన్యువల్‌ని తెరవండి</string>
+    <string name="settings_general">జనరల్</string>
+    <string name="settings_safety">భద్రత</string>
+    <string name="settings_about">గురించి</string>
+    <string name="dark_mode">డార్క్ మోడ్</string>
+    <string name="dark_mode_description">చీకటి థీమ్‌ను ప్రారంభించండి</string>
+    <string name="voice_trigger">వాయిస్ ట్రిగ్గర్</string>
+    <string name="voice_trigger_description">వాయిస్ అత్యవసర కీలక పదాలను ప్రారంభించండి</string>
+    <string name="change_gender">లింగాన్ని మార్చండి</string>
+    <string name="manage_contacts">అత్యవసర పరిచయాలను నిర్వహించండి</string>
+    <string name="app_version">యాప్ వెర్షన్</string>
+    
+    
+    <string name="notification_channel_safety">భద్రతా పర్యవేక్షణ</string>
+    <string name="notification_channel_emergency">అత్యవసర హెచ్చరికలు</string>
+    <string name="notification_title_monitoring">సేఫ్‌పల్స్ యాక్టివ్</string>
+    <string name="notification_text_monitoring">మీ భద్రతను పర్యవేక్షిస్తోంది</string>
+    <string name="notification_title_high_risk">హై రిస్క్ జోన్</string>
+    <string name="notification_text_high_risk">మీరు హైరిస్క్ ఏరియాలో ఉన్నారు. అప్రమత్తంగా ఉండండి!</string>
+    <string name="notification_emergency_countdown">ఎమర్జెన్సీ గుర్తించబడింది! %1$d సెకన్లలో SOS పంపబడుతోంది</string>
+    <string name="notification_heightened_mode">అధిక భద్రత మోడ్ సక్రియం చేయబడింది</string>
+    
+    
+    <string name="permission_location_title">స్థాన అనుమతి</string>
+    <string name="permission_location_message">భద్రతా ప్రమాదాలను గుర్తించడానికి SafePulseకి మీ స్థానం అవసరం</string>
+    <string name="permission_sms_title">SMS అనుమతి</string>
+    <string name="permission_sms_message">అత్యవసర సందేశాలను పంపడం అవసరం</string>
+    <string name="permission_call_title">కాల్ అనుమతి</string>
+    <string name="permission_call_message">అత్యవసర కాల్‌లు చేయడం అవసరం</string>
+    
+    
+    <string name="error_no_contacts">దయచేసి కనీసం 2 అత్యవసర పరిచయాలను జోడించండి</string>
+    <string name="error_invalid_phone">చెల్లని ఫోన్ నంబర్</string>
+    <string name="error_permission_denied">అనుమతి నిరాకరించబడింది. యాప్ పరిమిత కార్యాచరణతో పని చేస్తుంది</string>
+    <string name="extracted_search_destination">గమ్యాన్ని శోధించండి</string>
+    <string name="extracted_address_or_place_name">చిరునామా లేదా స్థలం పేరు</string>
+    <string name="extracted_eg_mumbai_airport_bandra">ఉదా., ముంబై విమానాశ్రయం, బాంద్రా</string>
+    <string name="extracted_quick_distances">త్వరిత దూరాలు:</string>
+    <string name="extracted_1km">1కి.మీ</string>
+    <string name="extracted_2km">2కి.మీ</string>
+    <string name="extracted_5km">5కి.మీ</string>
+    <string name="extracted_popular_destinations">ప్రసిద్ధ గమ్యస్థానాలు:</string>
+    <string name="extracted_nearby_2km_away">సమీపంలో (~2 కిమీ దూరం)</string>
+    <string name="extracted_searching">శోధిస్తోంది...</string>
+    <string name="extracted_search">శోధించండి</string>
+    <string name="extracted_safe_routes">సురక్షిత మార్గాలు</string>
+    <string name="extracted_dismiss">తొలగించు</string>
+    <string name="extracted_location_permission_needed">స్థాన అనుమతి అవసరం</string>
+    <string name="extracted_tap_for_routes">మార్గాల కోసం నొక్కండి</string>
+    <string name="extracted_enter_any_location">ఏదైనా స్థానాన్ని నమోదు చేయండి:</string>
+    <string name="extracted_place_or_address">స్థలం లేదా చిరునామా</string>
+    <string name="extracted_eg_mumbai_airport">ఉదా., ముంబై విమానాశ్రయం</string>
+    <string name="extracted_quick_options">త్వరిత ఎంపికలు:</string>
+    <string name="extracted_test_mode">పరీక్ష మోడ్</string>
+    <string name="extracted_safest">సురక్షితమైనది</string>
+    <string name="extracted_legend">లెజెండ్</string>
+    <string name="extracted_skip">దాటవేయి</string>
+    <string name="extracted_risk_map">రిస్క్ మ్యాప్</string>
+    <string name="extracted_location_permission_required">స్థాన అనుమతి అవసరం</string>
+    <string name="extracted_grant_permission">అనుమతి ఇవ్వండి</string>
+    <string name="extracted_your_area_risk_analysis">📍 మీ ప్రాంత ప్రమాద విశ్లేషణ</string>
+    <string name="extracted_nearby_crime_zones">సమీప క్రైమ్ జోన్‌లు:</string>
+    <string name="extracted_nearby_disaster_zones">సమీపంలోని విపత్తు మండలాలు:</string>
+    <string name="extracted_safe_route_suggestions">🛣️ సురక్షిత మార్గం సూచనలు</string>
+    <string name="extracted_find_safe_route">🛣️ సురక్షిత మార్గాన్ని కనుగొనండి</string>
+    <string name="extracted_select_a_destination_to_get_the_safest_route_based_on_crime_and_disaster_data">నేరం మరియు విపత్తు డేటా ఆధారంగా సురక్షితమైన మార్గాన్ని పొందడానికి గమ్యాన్ని ఎంచుకోండి:</string>
+    <string name="extracted_nearby_2km_away_1">📍 సమీపంలో (~2 కి.మీ దూరం)</string>
+    <string name="extracted_tap_to_search_destination">గమ్యాన్ని శోధించడానికి 🔍 నొక్కండి</string>
+    <string name="extracted_event_history">ఈవెంట్ చరిత్ర</string>
+    <string name="extracted_no_events_yet">ఇంకా ఈవెంట్‌లు లేవు</string>
+    <string name="extracted_safety_events_will_appear_here">భద్రతా ఈవెంట్‌లు ఇక్కడ కనిపిస్తాయి</string>
+    <string name="extracted_test_voice_trigger_demo">టెస్ట్ వాయిస్ ట్రిగ్గర్ (డెమో)</string>
+    <string name="extracted_quick_actions">త్వరిత చర్యలు</string>
+    <string name="extracted_crime_disaster_zones">క్రైమ్ &amp; డిజాస్టర్ జోన్‌లు</string>
+    <string name="extracted_find_safest_path">సురక్షితమైన మార్గాన్ని కనుగొనండి</string>
+    <string name="extracted_monitoring_in_background">నేపథ్యంలో పర్యవేక్షణ</string>
+    <string name="extracted_mode">మోడ్</string>
+    <string name="extracted_voice_trigger_demo">వాయిస్ ట్రిగ్గర్ డెమో</string>
+    <string name="extracted_this_simulates_voice_keyword_detection_type_a_phrase_containing_trigger_words">ఇది వాయిస్ కీవర్డ్ డిటెక్షన్‌ను అనుకరిస్తుంది. ట్రిగ్గర్ పదాలను కలిగి ఉన్న పదబంధాన్ని టైప్ చేయండి:</string>
+    <string name="extracted_enter_phrase">పదబంధాన్ని నమోదు చేయండి</string>
+    <string name="extracted_test">పరీక్ష</string>
+    <string name="extracted_set_as_primary_contact">ప్రాథమిక పరిచయంగా సెట్ చేయండి</string>
+    <string name="extracted_your_complete_guide_to_staying_safe">సురక్షితంగా ఉండటానికి మీ పూర్తి గైడ్</string>
+    <string name="extracted_stay_safe_with_safepulse">సేఫ్‌పల్స్‌తో సురక్షితంగా ఉండండి</string>
+    <string name="extracted_version_100">వెర్షన్ 1.0.0</string>
+    <string name="home_sos_active">యాక్టివ్</string>
+    <string name="home_sos_start">START</string>
+    <string name="home_protection_active">రక్షణ యాక్టివ్</string>
+    <string name="home_tap_to_start">రక్షణను ప్రారంభించడానికి నొక్కండి</string>
+    <string name="home_quick_action_manual_sos">మాన్యువల్\nSOS</string>
+    <string name="home_quick_action_fake_call">నకిలీ\nకాల్</string>
+    <string name="home_quick_action_silent_alert">నిశ్శబ్దం\nఅలర్ట్</string>
+    <string name="voice_trigger_hint">SOSని ట్రిగ్గర్ చేయడానికి \"సహాయం\" లేదా \"అత్యవసరం\" చెప్పండి</string>
+    <string name="settings_about_title">గురించి</string>
+    <string name="settings_add_contact_title">అత్యవసర పరిచయాన్ని జోడించండి</string>
+    <string name="settings_contact_name_hint">పేరు</string>
+    <string name="settings_contact_phone_hint">ఫోన్ నంబర్ (10 అంకెలు)</string>
+    <string name="settings_safety_zone_title">భద్రతా మండలాలు</string>
+    <string name="settings_accident_hotspot_label">ప్రమాద హాట్‌స్పాట్‌లు</string>
+    <string name="settings_unsafe_zone_label">అసురక్షిత మండలాలు</string>
+    <string name="event_history_title">ఈవెంట్ చరిత్ర</string>
+    </resources>

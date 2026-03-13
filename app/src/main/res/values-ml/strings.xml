@@ -1,0 +1,211 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    
+    <string name="app_name">സേഫ് പൾസ്</string>
+    
+    
+    <string name="action_ok">ശരി</string>
+    <string name="action_cancel">റദ്ദാക്കുക</string>
+    <string name="action_save">സംരക്ഷിക്കുക</string>
+    <string name="action_back">തിരികെ</string>
+    <string name="action_next">അടുത്തത്</string>
+    <string name="action_complete">പൂർത്തിയാക്കുക</string>
+    <string name="action_add">ചേർക്കുക</string>
+    <string name="action_close">അടയ്ക്കുക</string>
+    <string name="action_delete">ഇല്ലാതാക്കുക</string>
+    
+    
+    <string name="onboarding_title">SafePulse-ലേക്ക് സ്വാഗതം</string>
+    <string name="onboarding_subtitle">നിങ്ങളുടെ സ്വകാര്യ സുരക്ഷാ കമ്പാനിയൻ</string>
+    <string name="onboarding_language_title">ആപ്പ് ഭാഷ തിരഞ്ഞെടുക്കുക</string>
+    <string name="onboarding_language_subtitle">നിങ്ങൾ ഇഷ്ടപ്പെടുന്ന ഭാഷ തിരഞ്ഞെടുക്കുക. നിങ്ങൾക്ക് ഇത് പിന്നീട് ക്രമീകരണങ്ങളിൽ മാറ്റാവുന്നതാണ്.</string>
+    <string name="onboarding_gender_title">ലിംഗഭേദം തിരഞ്ഞെടുക്കുക</string>
+    <string name="onboarding_gender_subtitle">നിങ്ങൾക്കായി സുരക്ഷാ ഫീച്ചറുകൾ ഇഷ്ടാനുസൃതമാക്കാൻ ഇത് ഞങ്ങളെ സഹായിക്കുന്നു</string>
+    <string name="gender_male">പുരുഷൻ</string>
+    <string name="gender_female">സ്ത്രീ</string>
+    <string name="gender_other">മറ്റുള്ളവ</string>
+    <string name="onboarding_contacts_title">അടിയന്തര കോൺടാക്റ്റുകൾ</string>
+    <string name="onboarding_contacts_subtitle">കുറഞ്ഞത് 2 അടിയന്തര കോൺടാക്റ്റുകളെങ്കിലും ചേർക്കുക</string>
+    <string name="add_contact">കോൺടാക്റ്റ് ചേർക്കുക</string>
+    <string name="contact_name">പേര്</string>
+    <string name="contact_phone">ഫോൺ നമ്പർ</string>
+    <string name="set_as_primary">പ്രാഥമിക കോൺടാക്റ്റായി സജ്ജമാക്കുക</string>
+    <string name="onboarding_voice_title">വോയ്സ് ട്രിഗർ</string>
+    <string name="onboarding_voice_subtitle">വോയ്‌സ് എമർജൻസി കീവേഡ് കണ്ടെത്തൽ പ്രവർത്തനക്ഷമമാക്കുക</string>
+    <string name="enable_voice_trigger">വോയ്സ് ട്രിഗർ പ്രവർത്തനക്ഷമമാക്കുക</string>
+    <string name="onboarding_complete">ആരംഭിക്കുക</string>
+    <string name="onboarding_contacts_count">%1$d/2 മിനിമം കോൺടാക്റ്റുകൾ ചേർത്തു</string>
+    <string name="primary_badge">പ്രാഥമികം</string>
+    <string name="remove_contact">കോൺടാക്റ്റ് നീക്കം ചെയ്യുക</string>
+    <string name="add_emergency_contact">അടിയന്തര കോൺടാക്റ്റ് ചേർക്കുക</string>
+    <string name="contact_phone_hint">ഫോൺ നമ്പർ (10 അക്കങ്ങൾ)</string>
+    <string name="contact_digits_count">%1$d/10 അക്കങ്ങൾ</string>
+    <string name="error_enter_name">ദയവായി ഒരു പേര് നൽകുക</string>
+    <string name="error_enter_phone">ദയവായി ഒരു ഫോൺ നമ്പർ നൽകുക</string>
+    <string name="error_phone_10_digits">ഫോൺ നമ്പർ കൃത്യമായി 10 അക്കങ്ങൾ ആയിരിക്കണം</string>
+    <string name="error_phone_digits_only">ഫോൺ നമ്പറിൽ അക്കങ്ങൾ മാത്രം അടങ്ങിയിരിക്കണം</string>
+    <string name="voice_emergency_trigger_title">വോയ്‌സ് എമർജൻസി ട്രിഗർ</string>
+    <string name="voice_emergency_trigger_hint">SOS പ്രവർത്തനക്ഷമമാക്കാൻ \"സഹായം\", \"എന്നെ രക്ഷിക്കുക\" അല്ലെങ്കിൽ \"അടിയന്തരാവസ്ഥ\" എന്ന് പറയുക</string>
+    <string name="voice_trigger_disclaimer">ഈ ഫീച്ചറിന് മൈക്രോഫോൺ അനുമതി ആവശ്യമാണ്, സുരക്ഷാ മോഡ് സജീവമാകുമ്പോൾ കീവേഡുകൾ കേൾക്കുകയും ചെയ്യും.</string>
+    
+    
+    <string name="home_title">സേഫ് പൾസ്</string>
+    <string name="safety_service">സുരക്ഷാ സേവനം</string>
+    <string name="service_running">സർവീസ് റണ്ണിംഗ്</string>
+    <string name="service_stopped">സർവീസ് നിർത്തി</string>
+    <string name="start_monitoring">നിരീക്ഷണം ആരംഭിക്കുക</string>
+    <string name="stop_monitoring">നിരീക്ഷണം നിർത്തുക</string>
+    <string name="risk_level">റിസ്ക് ലെവൽ</string>
+    <string name="risk_low">താഴ്ന്നത്</string>
+    <string name="risk_medium">ഇടത്തരം</string>
+    <string name="risk_high">ഉയർന്നത്</string>
+    <string name="safety_mode">സുരക്ഷാ മോഡ്</string>
+    <string name="mode_normal">സാധാരണ</string>
+    <string name="mode_heightened">ഉയർത്തി</string>
+    <string name="emergency_sos">അടിയന്തര എസ്.ഒ.എസ്</string>
+    <string name="event_logs">ഇവൻ്റ് ലോഗുകൾ</string>
+    <string name="settings">ക്രമീകരണങ്ങൾ</string>
+    <string name="total_events">മൊത്തം ഇവൻ്റുകൾ</string>
+    <string name="sos_sent">SOS അയച്ചു</string>
+    <string name="emergency_contacts">അടിയന്തര കോൺടാക്റ്റുകൾ</string>
+    
+    
+    <string name="logs_title">ഇവൻ്റ് ലോഗുകൾ</string>
+    <string name="no_events">സംഭവങ്ങളൊന്നും രേഖപ്പെടുത്തിയിട്ടില്ല</string>
+    <string name="event_type">ഇവൻ്റ് തരം</string>
+    <string name="event_time">സമയം</string>
+    <string name="event_location">സ്ഥാനം</string>
+    <string name="event_confidence">ആത്മവിശ്വാസം</string>
+    
+    
+    <string name="event_road_accident">റോഡ് അപകടം</string>
+    <string name="event_fall">വീഴ്ച കണ്ടെത്തി</string>
+    <string name="event_assault">സാധ്യമായ ആക്രമണം</string>
+    <string name="event_inactivity">നിഷ്ക്രിയത്വ മുന്നറിയിപ്പ്</string>
+    <string name="event_voice_trigger">വോയ്സ് എമർജൻസി</string>
+    <string name="event_manual_sos">മാനുവൽ എസ്ഒഎസ്</string>
+    <string name="event_high_risk_zone">ഉയർന്ന അപകടസാധ്യതയുള്ള മേഖല</string>
+    
+    
+    <string name="settings_title">ക്രമീകരണങ്ങൾ</string>
+    <string name="settings_profile">പ്രൊഫൈൽ</string>
+    <string name="settings_appearance">രൂപഭാവം</string>
+    <string name="settings_language">അപ്ലിക്കേഷൻ ഭാഷ</string>
+    <string name="settings_select_language">ഭാഷ തിരഞ്ഞെടുക്കുക</string>
+    <string name="language_system_default">സിസ്റ്റം ഡിഫോൾട്ട്</string>
+    <string name="settings_no_contacts">അടിയന്തര കോൺടാക്‌റ്റുകളൊന്നും ചേർത്തിട്ടില്ല</string>
+    <string name="settings_add_contacts_hint">അടിയന്തര SOS-നായി കുറഞ്ഞത് 2 കോൺടാക്റ്റുകളെങ്കിലും ചേർക്കുക</string>
+    <string name="settings_statistics">സ്ഥിതിവിവരക്കണക്കുകൾ</string>
+    <string name="settings_events_detected">സുരക്ഷാ ഇവൻ്റുകൾ കണ്ടെത്തി</string>
+    <string name="settings_emergency_messages_sent">അടിയന്തര സന്ദേശങ്ങൾ അയച്ചു</string>
+    <string name="settings_contacts_configured">%1$d കോൺടാക്റ്റുകൾ കോൺഫിഗർ ചെയ്‌തു</string>
+    <string name="settings_safety_zones">സുരക്ഷാ മേഖലകൾ</string>
+    <string name="settings_accident_hotspots">അപകട ഹോട്ട്‌സ്‌പോട്ടുകൾ</string>
+    <string name="settings_unsafe_zones">സുരക്ഷിതമല്ലാത്ത മേഖലകൾ</string>
+    <string name="settings_zones_loaded">%1$d സോണുകൾ ലോഡ് ചെയ്തു</string>
+    <string name="settings_view_on_risk_map">റിസ്ക് മാപ്പിൽ കാണുക</string>
+    <string name="settings_offline_first">ഓഫ്‌ലൈൻ-ആദ്യ സുരക്ഷാ ആപ്ലിക്കേഷൻ</string>
+    <string name="settings_user_manual">ഉപയോക്തൃ മാനുവൽ</string>
+    <string name="settings_user_manual_desc">എല്ലാ സവിശേഷതകളെക്കുറിച്ചും അറിയുക</string>
+    <string name="settings_open_user_manual">ഉപയോക്തൃ മാനുവൽ തുറക്കുക</string>
+    <string name="settings_general">ജനറൽ</string>
+    <string name="settings_safety">സുരക്ഷ</string>
+    <string name="settings_about">കുറിച്ച്</string>
+    <string name="dark_mode">ഡാർക്ക് മോഡ്</string>
+    <string name="dark_mode_description">ഇരുണ്ട തീം പ്രവർത്തനക്ഷമമാക്കുക</string>
+    <string name="voice_trigger">വോയ്സ് ട്രിഗർ</string>
+    <string name="voice_trigger_description">വോയ്‌സ് എമർജൻസി കീവേഡുകൾ പ്രവർത്തനക്ഷമമാക്കുക</string>
+    <string name="change_gender">ലിംഗഭേദം മാറ്റുക</string>
+    <string name="manage_contacts">എമർജൻസി കോൺടാക്റ്റുകൾ നിയന്ത്രിക്കുക</string>
+    <string name="app_version">ആപ്പ് പതിപ്പ്</string>
+    
+    
+    <string name="notification_channel_safety">സുരക്ഷാ നിരീക്ഷണം</string>
+    <string name="notification_channel_emergency">അടിയന്തര അലേർട്ടുകൾ</string>
+    <string name="notification_title_monitoring">സേഫ്പൾസ് ആക്റ്റീവ്</string>
+    <string name="notification_text_monitoring">നിങ്ങളുടെ സുരക്ഷ നിരീക്ഷിക്കുന്നു</string>
+    <string name="notification_title_high_risk">ഉയർന്ന അപകടസാധ്യതയുള്ള മേഖല</string>
+    <string name="notification_text_high_risk">നിങ്ങൾ ഉയർന്ന അപകടസാധ്യതയുള്ള പ്രദേശത്താണ്. ജാഗ്രത പാലിക്കുക!</string>
+    <string name="notification_emergency_countdown">അടിയന്തരാവസ്ഥ കണ്ടെത്തി! %1$d സെക്കൻഡിനുള്ളിൽ SOS അയയ്ക്കുന്നു</string>
+    <string name="notification_heightened_mode">ഉയർന്ന സുരക്ഷാ മോഡ് സജീവമാക്കി</string>
+    
+    
+    <string name="permission_location_title">ലൊക്കേഷൻ അനുമതി</string>
+    <string name="permission_location_message">സുരക്ഷാ അപകടസാധ്യതകൾ കണ്ടെത്തുന്നതിന് SafePulse-ന് നിങ്ങളുടെ ലൊക്കേഷൻ ആവശ്യമാണ്</string>
+    <string name="permission_sms_title">SMS അനുമതി</string>
+    <string name="permission_sms_message">അടിയന്തര സന്ദേശങ്ങൾ അയയ്‌ക്കേണ്ടത് ആവശ്യമാണ്</string>
+    <string name="permission_call_title">കോൾ പെർമിഷൻ</string>
+    <string name="permission_call_message">അടിയന്തര കോളുകൾ ചെയ്യാൻ ആവശ്യമാണ്</string>
+    
+    
+    <string name="error_no_contacts">കുറഞ്ഞത് 2 അടിയന്തര കോൺടാക്റ്റുകളെങ്കിലും ചേർക്കുക</string>
+    <string name="error_invalid_phone">അസാധുവായ ഫോൺ നമ്പർ</string>
+    <string name="error_permission_denied">അനുമതി നിഷേധിച്ചു. പരിമിതമായ പ്രവർത്തനക്ഷമതയിൽ ആപ്പ് പ്രവർത്തിക്കും</string>
+    <string name="extracted_search_destination">ലക്ഷ്യസ്ഥാനം തിരയുക</string>
+    <string name="extracted_address_or_place_name">വിലാസം അല്ലെങ്കിൽ സ്ഥലത്തിൻ്റെ പേര്</string>
+    <string name="extracted_eg_mumbai_airport_bandra">ഉദാ. മുംബൈ എയർപോർട്ട്, ബാന്ദ്ര</string>
+    <string name="extracted_quick_distances">ദ്രുത ദൂരങ്ങൾ:</string>
+    <string name="extracted_1km">1 കി.മീ</string>
+    <string name="extracted_2km">2 കി.മീ</string>
+    <string name="extracted_5km">5 കി.മീ</string>
+    <string name="extracted_popular_destinations">ജനപ്രിയ ലക്ഷ്യസ്ഥാനങ്ങൾ:</string>
+    <string name="extracted_nearby_2km_away">സമീപത്ത് (~2 കിലോമീറ്റർ അകലെ)</string>
+    <string name="extracted_searching">തിരയുന്നു...</string>
+    <string name="extracted_search">തിരയുക</string>
+    <string name="extracted_safe_routes">സുരക്ഷിതമായ വഴികൾ</string>
+    <string name="extracted_dismiss">പിരിച്ചുവിടുക</string>
+    <string name="extracted_location_permission_needed">ലൊക്കേഷൻ അനുമതി ആവശ്യമാണ്</string>
+    <string name="extracted_tap_for_routes">റൂട്ടുകൾക്കായി ടാപ്പ് ചെയ്യുക</string>
+    <string name="extracted_enter_any_location">ഏതെങ്കിലും ലൊക്കേഷൻ നൽകുക:</string>
+    <string name="extracted_place_or_address">സ്ഥലം അല്ലെങ്കിൽ വിലാസം</string>
+    <string name="extracted_eg_mumbai_airport">ഉദാ. മുംബൈ എയർപോർട്ട്</string>
+    <string name="extracted_quick_options">ദ്രുത ഓപ്ഷനുകൾ:</string>
+    <string name="extracted_test_mode">ടെസ്റ്റ് മോഡ്</string>
+    <string name="extracted_safest">സുരക്ഷിതം</string>
+    <string name="extracted_legend">ഇതിഹാസം</string>
+    <string name="extracted_skip">ഒഴിവാക്കുക</string>
+    <string name="extracted_risk_map">റിസ്ക് മാപ്പ്</string>
+    <string name="extracted_location_permission_required">ലൊക്കേഷൻ അനുമതി ആവശ്യമാണ്</string>
+    <string name="extracted_grant_permission">അനുമതി നൽകുക</string>
+    <string name="extracted_your_area_risk_analysis">📍 നിങ്ങളുടെ ഏരിയ റിസ്ക് അനാലിസിസ്</string>
+    <string name="extracted_nearby_crime_zones">അടുത്തുള്ള ക്രൈം സോണുകൾ:</string>
+    <string name="extracted_nearby_disaster_zones">സമീപത്തെ ദുരന്ത മേഖലകൾ:</string>
+    <string name="extracted_safe_route_suggestions">🛣️ സുരക്ഷിത റൂട്ട് നിർദ്ദേശങ്ങൾ</string>
+    <string name="extracted_find_safe_route">🛣️ സുരക്ഷിതമായ വഴി കണ്ടെത്തുക</string>
+    <string name="extracted_select_a_destination_to_get_the_safest_route_based_on_crime_and_disaster_data">കുറ്റകൃത്യങ്ങളുടെയും ദുരന്ത വിവരങ്ങളുടെയും അടിസ്ഥാനത്തിൽ ഏറ്റവും സുരക്ഷിതമായ വഴി ലഭിക്കാൻ ഒരു ലക്ഷ്യസ്ഥാനം തിരഞ്ഞെടുക്കുക:</string>
+    <string name="extracted_nearby_2km_away_1">📍 സമീപത്ത് (~2 കിലോമീറ്റർ അകലെ)</string>
+    <string name="extracted_tap_to_search_destination">ലക്ഷ്യസ്ഥാനം തിരയാൻ 🔍 ടാപ്പ് ചെയ്യുക</string>
+    <string name="extracted_event_history">ഇവൻ്റ് ചരിത്രം</string>
+    <string name="extracted_no_events_yet">ഇതുവരെ ഇവൻ്റുകളൊന്നുമില്ല</string>
+    <string name="extracted_safety_events_will_appear_here">സുരക്ഷാ ഇവൻ്റുകൾ ഇവിടെ ദൃശ്യമാകും</string>
+    <string name="extracted_test_voice_trigger_demo">ടെസ്റ്റ് വോയ്സ് ട്രിഗർ (ഡെമോ)</string>
+    <string name="extracted_quick_actions">ദ്രുത പ്രവർത്തനങ്ങൾ</string>
+    <string name="extracted_crime_disaster_zones">ക്രൈം &amp; ഡിസാസ്റ്റർ സോണുകൾ</string>
+    <string name="extracted_find_safest_path">സുരക്ഷിതമായ പാത കണ്ടെത്തുക</string>
+    <string name="extracted_monitoring_in_background">പശ്ചാത്തലത്തിൽ നിരീക്ഷണം</string>
+    <string name="extracted_mode">മോഡ്</string>
+    <string name="extracted_voice_trigger_demo">വോയ്സ് ട്രിഗർ ഡെമോ</string>
+    <string name="extracted_this_simulates_voice_keyword_detection_type_a_phrase_containing_trigger_words">ഇത് വോയിസ് കീവേഡ് കണ്ടെത്തലിനെ അനുകരിക്കുന്നു. ട്രിഗർ വാക്കുകൾ അടങ്ങിയ ഒരു വാക്യം ടൈപ്പ് ചെയ്യുക:</string>
+    <string name="extracted_enter_phrase">വാക്യം നൽകുക</string>
+    <string name="extracted_test">ടെസ്റ്റ്</string>
+    <string name="extracted_set_as_primary_contact">പ്രാഥമിക കോൺടാക്റ്റായി സജ്ജമാക്കുക</string>
+    <string name="extracted_your_complete_guide_to_staying_safe">സുരക്ഷിതമായി തുടരുന്നതിനുള്ള നിങ്ങളുടെ പൂർണ്ണ ഗൈഡ്</string>
+    <string name="extracted_stay_safe_with_safepulse">SafePulse ഉപയോഗിച്ച് സുരക്ഷിതമായിരിക്കുക</string>
+    <string name="extracted_version_100">പതിപ്പ് 1.0.0</string>
+    <string name="home_sos_active">സജീവം</string>
+    <string name="home_sos_start">ആരംഭിക്കുക</string>
+    <string name="home_protection_active">സംരക്ഷണം സജീവമാണ്</string>
+    <string name="home_tap_to_start">സംരക്ഷണം ആരംഭിക്കാൻ ടാപ്പ് ചെയ്യുക</string>
+    <string name="home_quick_action_manual_sos">മാനുവൽ\nSOS</string>
+    <string name="home_quick_action_fake_call">വ്യാജ\nവിളി</string>
+    <string name="home_quick_action_silent_alert">നിശബ്ദത\nഅലേർട്ട്</string>
+    <string name="voice_trigger_hint">SOS പ്രവർത്തനക്ഷമമാക്കാൻ \"സഹായം\" അല്ലെങ്കിൽ \"അടിയന്തരാവസ്ഥ\" എന്ന് പറയുക</string>
+    <string name="settings_about_title">കുറിച്ച്</string>
+    <string name="settings_add_contact_title">അടിയന്തര കോൺടാക്റ്റ് ചേർക്കുക</string>
+    <string name="settings_contact_name_hint">പേര്</string>
+    <string name="settings_contact_phone_hint">ഫോൺ നമ്പർ (10 അക്കങ്ങൾ)</string>
+    <string name="settings_safety_zone_title">സുരക്ഷാ മേഖലകൾ</string>
+    <string name="settings_accident_hotspot_label">അപകട ഹോട്ട്‌സ്‌പോട്ടുകൾ</string>
+    <string name="settings_unsafe_zone_label">സുരക്ഷിതമല്ലാത്ത മേഖലകൾ</string>
+    <string name="event_history_title">ഇവൻ്റ് ചരിത്രം</string>
+    </resources>

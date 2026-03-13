@@ -1,0 +1,55 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+
+# Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
+.kotlin/
+
+# Gradle build outputs
+build/
+app/build/
+wear/build/
+
+# Gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+
+# IDE
+.idea/
+*.iml
+.gradle/
+
+# Audio research artifacts (keep code scripts, ignore bulky training data/env)
+Audio_Dataset3/venv/
+Audio_Dataset3/.cache/
+Audio_Dataset3/call police/
+Audio_Dataset3/help me/
+Audio_Dataset3/i need help/
+Audio_Dataset3/madat karo/
+Audio_Dataset3/mujhe_bachao/
+Audio_Dataset3/palice call martini/
+Audio_Dataset3/Sendhelp/
+Audio_Dataset3/unknown/

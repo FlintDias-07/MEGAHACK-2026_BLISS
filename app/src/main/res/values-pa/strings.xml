@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SafePulse</string>
+
+    <string name="action_ok">ਠੀਕ ਹੈ</string>
+    <string name="action_cancel">ਰੱਦ ਕਰੋ</string>
+    <string name="action_save">ਸੇਵ ਕਰੋ</string>
+    <string name="action_back">ਪਿੱਛੇ</string>
+    <string name="action_next">ਅਗਲਾ</string>
+    <string name="action_complete">ਸੰਪੂਰਨ</string>
+    <string name="action_add">ਸ਼ਾਮਲ ਕਰੋ</string>
+    <string name="action_close">ਬੰਦ ਕਰੋ</string>
+    <string name="action_delete">ਮਿਟਾਓ</string>
+
+    <string name="onboarding_language_title">ਐਪ ਭਾਸ਼ਾ ਚੁਣੋ</string>
+    <string name="onboarding_language_subtitle">ਆਪਣੀ ਪਸੰਦੀਦਾ ਭਾਸ਼ਾ ਚੁਣੋ। ਤੁਸੀਂ ਇਸਨੂੰ ਬਾਅਦ ਵਿੱਚ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬਦਲ ਸਕਦੇ ਹੋ।</string>
+    <string name="settings_title">ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_profile">ਪ੍ਰੋਫਾਈਲ</string>
+    <string name="settings_gender">ਲਿੰਗ</string>
+    <string name="settings_appearance">ਦਿੱਖ</string>
+    <string name="settings_language">ਐਪ ਭਾਸ਼ਾ</string>
+    <string name="settings_select_language">ਭਾਸ਼ਾ ਚੁਣੋ</string>
+    <string name="language_system_default">ਸਿਸਟਮ ਪੂਰਵ-ਨਿਰਧਾਰਤ</string>
+    <string name="extracted_search_destination">ਮੰਜ਼ਿਲ ਖੋਜੋ</string>
+    <string name="extracted_address_or_place_name">ਪਤਾ ਜਾਂ ਥਾਂ ਦਾ ਨਾਮ</string>
+    <string name="extracted_eg_mumbai_airport_bandra">ਜਿਵੇਂ, ਮੁੰਬਈ ਹਵਾਈ ਅੱਡਾ, ਬਾਂਦਰਾ</string>
+
+    <string name="extracted_event_history">ਇਵੈਂਟ ਇਤਿਹਾਸ</string>
+    <string name="extracted_no_events_yet">ਅਜੇ ਤੱਕ ਕੋਈ ਇਵੈਂਟ ਨਹੀਂ ਹਨ</string>
+    <string name="extracted_safety_events_will_appear_here">ਸੁਰੱਖਿਆ ਇਵੈਂਟ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ</string>
+    <string name="extracted_quick_actions">ਤੇਜ਼ ਕਾਰਵਾਈਆਂ</string>
+    <string name="extracted_voice_trigger_demo">ਵੌਇਸ ਟ੍ਰਿਗਰ ਡੈਮੋ</string>
+    <string name="extracted_enter_phrase">ਵਾਕਾਂਸ਼ ਦਰਜ ਕਰੋ</string>
+    <string name="extracted_test">ਟੈਸਟ</string>
+    <string name="extracted_set_as_primary_contact">ਪ੍ਰਾਇਮਰੀ ਸੰਪਰਕ ਵਜੋਂ ਸੈੱਟ ਕਰੋ</string>
+    <string name="fake_call_caller_name">ਮਾਂ</string>
+    <string name="tutorial_sos_button_title">SOS ਬਟਨ</string>
+    <string name="tutorial_sos_button_description">ਤੁਹਾਡੇ ਸਥਾਨ ਸਮੇਤ SOS ਅਲਰਟ ਤੁਰੰਤ ਸਾਰੇ ਐਮਰਜੈਂਸੀ ਸੰਪਰਕਾਂ ਨੂੰ ਭੇਜਣ ਲਈ ਇਸ ਬਟਨ ਨੂੰ ਦਬਾ ਕੇ ਰੱਖੋ।</string>
+    <string name="tutorial_safety_status_title">ਸੁਰੱਖਿਆ ਸਥਿਤੀ</string>
+    <string name="tutorial_safety_status_description">ਇਹ ਤੁਹਾਡਾ ਮੌਜੂਦਾ ਸੁਰੱਖਿਆ ਮੋਡ ਦਿਖਾਉਂਦਾ ਹੈ। ਇਹ ਤੁਹਾਡੇ ਸਥਾਨ ਅਤੇ ਸੈਂਸਰ ਡਾਟਾ ਦੇ ਆਧਾਰ ਤੇ ਆਪਣੇ ਆਪ ਬਦਲਦਾ ਹੈ।</string>
+    <string name="tutorial_quick_actions_title">ਤੇਜ਼ ਕਾਰਵਾਈਆਂ</string>
+    <string name="tutorial_quick_actions_description">ਫੇਕ ਕਾਲ, ਸਾਇਲੈਂਟ ਅਲਰਟ ਅਤੇ ਹੋਰ ਸੁਰੱਖਿਆ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਲਈ ਇਨ੍ਹਾਂ ਸ਼ਾਰਟਕਟਾਂ ਦਾ ਤੇਜ਼ੀ ਨਾਲ ਉਪਯੋਗ ਕਰੋ।</string>
+    <string name="tutorial_risk_map_title">ਜੋਖਿਮ ਨਕਸ਼ਾ</string>
+    <string name="tutorial_risk_map_description">ਜ਼ਿਆਦਾ ਸੁਰੱਖਿਅਤ ਨੇਵੀਗੇਸ਼ਨ ਲਈ ਆਪਣੇ ਨੇੜਲੇ ਹਾਦਸਾ ਹਾਟਸਪਾਟ ਅਤੇ ਅਸੁਰੱਖਿਅਤ ਖੇਤਰਾਂ ਦਾ ਹੀਟਮੈਪ ਦੇਖੋ।</string>
+    <string name="tutorial_safe_routes_title">ਸੁਰੱਖਿਅਤ ਰਸਤੇ</string>
+    <string name="tutorial_safe_routes_description">ਉੱਚ-ਜੋਖਿਮ ਖੇਤਰਾਂ ਤੋਂ ਬਚਦੇ ਰਸਤੇ ਚੁਣੋ। ਹਮੇਸ਼ਾਂ ਗਤੀ ਨਾਲੋਂ ਸੁਰੱਖਿਆ ਨੂੰ ਤਰਜੀਹ ਦਿਓ।</string>
+</resources>

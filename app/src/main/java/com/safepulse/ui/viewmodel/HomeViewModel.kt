@@ -2,7 +2,6 @@ package com.safepulse.ui.viewmodel
 
 import com.safepulse.R
 
-
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +14,7 @@ import com.safepulse.data.repository.DisasterRepository
 import com.safepulse.data.repository.EmergencyContactRepository
 import com.safepulse.data.repository.EventLogRepository
 import com.safepulse.data.repository.HotspotRepository
+import com.safepulse.domain.model.GlobalState
 import com.safepulse.domain.model.RiskLevel
 import com.safepulse.domain.model.SafetyMode
 import com.safepulse.domain.saferoutes.DisasterAlert
@@ -105,39 +105,40 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    
+
     fun toggleService() {
-        viewModelScope.launch {
-            val newState = !_state.value.isServiceRunning
-            
-            if (newState) {
-                SafetyForegroundService.start(app)
-                SafetyCheckWorker.schedule(app)
-            } else {
-                SafetyForegroundService.stop(app)
-                SafetyCheckWorker.cancel(app)
-            }
-            
-            userPreferences.setServiceEnabled(newState)
-        }
-    }
-    
-    fun triggerManualSOS() {
-        val service = SafetyForegroundService.getInstance()
-        if (service != null) {
-            service.triggerManualSOS()
+      viewModelScope.launch {
+        val newState = !_state.value.isServiceRunning
+
+        if (newState) {
+          SafetyForegroundService.start(app)
+          SafetyCheckWorker.schedule(app)
+          GlobalState.isSafetyMonitoringActive = true
         } else {
-            // Service not running, start it first then trigger
-            viewModelScope.launch {
-                if (!_state.value.isServiceRunning) {
-                    SafetyForegroundService.start(app)
-                    userPreferences.setServiceEnabled(true)
-                    // Give service time to initialize
-                    kotlinx.coroutines.delay(1000)
-                }
-                SafetyForegroundService.getInstance()?.triggerManualSOS()
-            }
+          SafetyForegroundService.stop(app)
+          SafetyCheckWorker.cancel(app)
+          GlobalState.isSafetyMonitoringActive = false
         }
+
+        userPreferences.setServiceEnabled(newState)
+      }
+    }
+
+    fun triggerManualSOS() {
+      val service = SafetyForegroundService.getInstance()
+      if (service != null) {
+        service.triggerManualSOS()
+      } else {
+        viewModelScope.launch {
+          if (!_state.value.isServiceRunning) {
+            SafetyForegroundService.start(app)
+            userPreferences.setServiceEnabled(true)
+            GlobalState.isSafetyMonitoringActive = true
+            kotlinx.coroutines.delay(1000)
+          }
+          SafetyForegroundService.getInstance()?.triggerManualSOS()
+        }
+      }
     }
     
     fun shareLocation() {

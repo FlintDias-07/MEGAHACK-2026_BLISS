@@ -80,6 +80,7 @@ fun OnboardingScreen(
                     onLanguageSelected = {
                         viewModel.setLanguage(it)
                         onLanguageChanged()
+                        viewModel.nextStep()
                     }
                 )
                 1 -> GenderSelectionStep(

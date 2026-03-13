@@ -1,6 +1,9 @@
 package com.safepulse
 
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +18,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.safepulse.data.prefs.UserPreferences
+import com.safepulse.domain.model.GlobalState
+import com.safepulse.service.SafetyForegroundService
 import com.safepulse.ui.onboarding.OnboardingOverlayScreen
 import com.safepulse.ui.screens.*
 import com.safepulse.ui.theme.SafePulseTheme
@@ -101,6 +106,52 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private var volumePressCount = 0
+    private var lastPressTime = 0L
+    private val PRESS_WINDOW = 2000L // 2 seconds
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+      if (event.keyCode == KeyEvent.KEYCODE_VOLUME_UP && event.action == KeyEvent.ACTION_DOWN) {
+        handleVolumePress()
+        return true // Consume the event to prevent actual volume change
+      }
+      return super.dispatchKeyEvent(event)
+    }
+
+    private fun handleVolumePress() {
+      if (!GlobalState.isSafetyMonitoringActive) {
+        Log.d("SafePulse", "Volume SOS ignored: Safety Monitoring is OFF")
+        return
+      }
+
+      val currentTime = System.currentTimeMillis()
+
+      if (currentTime - lastPressTime < PRESS_WINDOW) {
+        volumePressCount++
+      } else {
+        volumePressCount = 1
+      }
+
+      lastPressTime = currentTime
+      Log.d("SafePulse", "Volume press count: $volumePressCount")
+
+      if (volumePressCount >= 3) {
+        volumePressCount = 0
+        triggerSOS()
+      }
+    }
+
+    private fun triggerSOS() {
+      Toast.makeText(this, "SOS Triggered", Toast.LENGTH_SHORT).show()
+
+      val service = SafetyForegroundService.getInstance()
+      if (service != null) {
+        service.triggerManualSOS()
+      } else {
+        Log.e("SafePulse", "Could not trigger SOS via Volume: Service instance is null")
+      }
     }
 
     private fun requestPermissions() {

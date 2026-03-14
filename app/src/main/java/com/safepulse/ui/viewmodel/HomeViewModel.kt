@@ -115,16 +115,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                                 SafetyForegroundService.start(app)
                                 SafetyCheckWorker.schedule(app)
                                 GlobalState.isSafetyMonitoringActive = true
-                            var prompted = false
-                            repeat(8) {
-                                if (prompted) return@repeat
-                                delay(300)
-                                val service = SafetyForegroundService.getInstance()
-                                if (service != null) {
-                                    service.promptVoiceAssistantActivation()
-                                    prompted = true
-                                }
-                            }
+                           var promptRequested = false
+                repeat(5) {
+                    if (promptRequested) return@repeat
+                    delay(350)
+                    val service = SafetyForegroundService.getInstance()
+                    if (service != null) {
+                        service.promptVoiceAssistantActivation()
+                        promptRequested = true
+                    }
+                }
                         } else {
                                 SafetyForegroundService.stop(app)
                                 SafetyCheckWorker.cancel(app)

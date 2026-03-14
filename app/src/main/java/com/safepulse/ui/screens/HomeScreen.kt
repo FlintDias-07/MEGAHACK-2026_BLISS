@@ -246,11 +246,11 @@ fun HomeScreen(
                             onClick = { viewModel.triggerManualSOS() },
                             modifier = Modifier.weight(1f)
                         )
-                        QuickActionButton(
-                            text = stringResource(R.string.home_quick_action_fake_call),
-                            icon = Icons.Default.PhoneInTalk,
-                            color = Color(0xFF2196F3),
-                            onClick = { viewModel.triggerFakeCall() },
+                     QuickActionButton(
+                            text = "Voice\nAssist",
+                            icon = Icons.Default.Mic,
+                            color = Color(0xFF00695C),
+                            onClick = { viewModel.startVoiceAssistant() },
                             modifier = Modifier.weight(1f)
                         )
                         QuickActionButton(

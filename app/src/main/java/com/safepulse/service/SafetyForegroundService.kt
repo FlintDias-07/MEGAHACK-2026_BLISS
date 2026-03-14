@@ -1,18 +1,23 @@
 package com.safepulse.service
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.media.MediaRecorder
+import android.os.Environment
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.safepulse.SafePulseApplication
 import com.safepulse.data.db.entity.EventLogEntity
@@ -31,6 +36,7 @@ import com.safepulse.ml.VoiceTriggerFactory
 import com.safepulse.ml.VoiceTriggerModule
 import com.safepulse.utils.NotificationHelper
 import com.safepulse.utils.SafetyConstants
+import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 
@@ -72,6 +78,9 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private var lastRiskLevel: RiskLevel = RiskLevel.LOW
     private var monitoringStarted = false
     private var emergencyFeedbackJob: Job? = null
+    private var emergencyRecordingJob: Job? = null
+    private var emergencyAudioRecorder: MediaRecorder? = null
+    private var currentEmergencyAudioFile: File? = null
     
     override fun onCreate() {
         super.onCreate()
@@ -107,6 +116,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
         super.onDestroy()
         stopMonitoring()
         stopEmergencyFeedbackNow()
+        stopEmergencyAudioRecordingNow()
         voiceAssistantService.cleanup()
         confirmationService.cleanup()
         serviceScope.cancel()
@@ -657,6 +667,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private fun startEmergencyFeedback(durationMs: Long = 20_000L) {
         emergencyFeedbackJob?.cancel()
         stopEmergencyFeedbackNow()
+        startEmergencyAudioRecording(durationMs)
 
         emergencyFeedbackJob = serviceScope.launch {
             startEmergencyVibration()
@@ -674,6 +685,98 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private fun stopEmergencyFeedbackNow() {
         stopEmergencyVibration()
         setTorchEnabled(false)
+    }
+
+    private fun startEmergencyAudioRecording(durationMs: Long = 20_000L) {
+        emergencyRecordingJob?.cancel()
+        stopEmergencyAudioRecordingNow()
+
+        if (!hasRecordAudioPermission()) {
+            Log.w("SafetyService", "Skipping SOS audio recording: RECORD_AUDIO permission not granted")
+            return
+        }
+
+        val outputFile = createEmergencyAudioFile() ?: run {
+            Log.w("SafetyService", "Skipping SOS audio recording: could not create output file")
+            return
+        }
+
+        val recorder = MediaRecorder()
+        try {
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            recorder.setAudioSamplingRate(44100)
+            recorder.setAudioEncodingBitRate(96000)
+            recorder.setOutputFile(outputFile.absolutePath)
+            recorder.prepare()
+            recorder.start()
+
+            emergencyAudioRecorder = recorder
+            currentEmergencyAudioFile = outputFile
+            Log.i("SafetyService", "SOS audio recording started: ${outputFile.absolutePath}")
+        } catch (e: Exception) {
+            Log.e("SafetyService", "Could not start SOS audio recording", e)
+            runCatching { recorder.reset() }
+            runCatching { recorder.release() }
+            outputFile.delete()
+            emergencyAudioRecorder = null
+            currentEmergencyAudioFile = null
+            return
+        }
+
+        emergencyRecordingJob = serviceScope.launch {
+            delay(durationMs)
+            stopEmergencyAudioRecordingNow()
+        }
+    }
+
+    private fun stopEmergencyAudioRecordingNow() {
+        emergencyRecordingJob?.cancel()
+        emergencyRecordingJob = null
+
+        val recorder = emergencyAudioRecorder ?: return
+        val outputFile = currentEmergencyAudioFile
+
+        var stopSucceeded = true
+        try {
+            recorder.stop()
+        } catch (e: Exception) {
+            stopSucceeded = false
+            Log.w("SafetyService", "SOS audio stop failed; deleting partial file", e)
+        } finally {
+            runCatching { recorder.reset() }
+            runCatching { recorder.release() }
+            emergencyAudioRecorder = null
+        }
+
+        if (!stopSucceeded) {
+            outputFile?.delete()
+            currentEmergencyAudioFile = null
+            return
+        }
+
+        if (outputFile != null) {
+            Log.i("SafetyService", "SOS audio recording saved: ${outputFile.absolutePath}")
+        }
+        currentEmergencyAudioFile = null
+    }
+
+    private fun hasRecordAudioPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun createEmergencyAudioFile(): File? {
+        val rootDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: File(filesDir, "audio")
+        val recordingsDir = File(rootDir, "sos_recordings")
+        if (!recordingsDir.exists() && !recordingsDir.mkdirs()) {
+            return null
+        }
+
+        return File(recordingsDir, "sos_audio_${System.currentTimeMillis()}.m4a")
     }
 
     @Suppress("DEPRECATION")

@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "SafePulse"
 include(":app")
-include(":wear")

@@ -17,9 +17,11 @@ import com.safepulse.data.repository.EmergencyContactRepository
 import com.safepulse.data.repository.EmergencyServiceRepository
 import com.safepulse.data.repository.EventLogRepository
 import com.safepulse.data.repository.HotspotRepository
+import com.safepulse.data.repository.SafeRoutesRepository
 import com.safepulse.data.repository.UnsafeZoneRepository
 import com.safepulse.domain.engine.SafetyEngine
 import com.safepulse.domain.model.*
+import com.safepulse.domain.saferoutes.RouteRiskAnalyzer
 import com.safepulse.ml.StubVoiceTriggerModule
 import com.safepulse.ml.VoiceTriggerFactory
 import com.safepulse.ml.VoiceTriggerModule
@@ -41,6 +43,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private lateinit var locationTracker: LocationTracker
     private lateinit var emergencyManager: EmergencyManager
     private lateinit var voiceTriggerModule: VoiceTriggerModule
+    private lateinit var voiceAssistantService: VoiceAssistantService
     private lateinit var shakeDetector: ShakeDetector
     private lateinit var confirmationService: EmergencyConfirmationService
     
@@ -50,6 +53,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private lateinit var contactRepository: EmergencyContactRepository
     private lateinit var eventLogRepository: EventLogRepository
     private lateinit var emergencyServiceRepository: EmergencyServiceRepository
+    private lateinit var safeRoutesRepository: SafeRoutesRepository
     private lateinit var userPreferences: UserPreferences
     
     // Sensors
@@ -97,6 +101,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         stopMonitoring()
+        voiceAssistantService.cleanup()
         confirmationService.cleanup()
         serviceScope.cancel()
         releaseWakeLock()
@@ -125,6 +130,19 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
         
         // Initialize safety engine
         safetyEngine = SafetyEngine()
+
+        // Initialize safe routes + voice assistant services
+        val routeRiskAnalyzer = RouteRiskAnalyzer(hotspotRepository)
+        safeRoutesRepository = SafeRoutesRepository(this@SafetyForegroundService, routeRiskAnalyzer)
+        voiceAssistantService = VoiceAssistantService(
+            context = this@SafetyForegroundService,
+            scope = serviceScope,
+            safeRoutesRepository = safeRoutesRepository,
+            onSendSosToContact = { contactName -> sendVoiceSosToContact(contactName) }
+        )
+        voiceAssistantService.initialize {
+            Log.d("SafetyService", "Voice assistant service initialized")
+        }
         
         // Initialize voice trigger module
         voiceTriggerModule = VoiceTriggerFactory.create(this@SafetyForegroundService)
@@ -398,6 +416,50 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
             }
         }
         wakeLock = null
+    }
+
+    fun startVoiceAssistantSession() {
+        voiceAssistantService.startAssistantSession()
+    }
+
+    fun promptVoiceAssistantActivation() {
+        voiceAssistantService.promptVoiceAssistantActivation()
+    }
+
+    private suspend fun sendVoiceSosToContact(rawContactName: String): String {
+        val contactName = rawContactName.trim()
+        if (contactName.isBlank()) return "I could not find that contact."
+
+        val contacts = contactRepository.getAllContactsList()
+        if (contacts.isEmpty()) return "No emergency contacts are configured."
+
+        val normalizedName = contactName.lowercase()
+        val contact = contacts.firstOrNull { it.name.lowercase() == normalizedName }
+            ?: contacts.firstOrNull { it.name.lowercase().contains(normalizedName) }
+            ?: return "I could not find that contact."
+
+        val event = EmergencyEvent(
+            timestamp = System.currentTimeMillis(),
+            type = EventType.VOICE_TRIGGER,
+            confidence = 1.0f,
+            location = locationTracker.currentLocation.value,
+            requiresConfirmation = false,
+            silent = true
+        )
+
+        val smsSent = emergencyManager.sendSOSMessages(listOf(contact), event)
+        if (!smsSent) return "I could not send the SOS message."
+
+        eventLogRepository.logEvent(
+            type = event.type.name,
+            confidence = event.confidence,
+            lat = event.location?.latitude ?: 0.0,
+            lng = event.location?.longitude ?: 0.0,
+            mode = safetyEngine.safetyState.value.mode.name,
+            wasSOSSent = true
+        )
+
+        return "SOS message sent to ${contact.name}."
     }
     
     // Sensor data accumulator

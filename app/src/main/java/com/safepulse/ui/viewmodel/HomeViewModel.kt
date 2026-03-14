@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class HomeState(
@@ -107,39 +108,68 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleService() {
-      viewModelScope.launch {
-        val newState = !_state.value.isServiceRunning
+                viewModelScope.launch {
+                        val newState = !_state.value.isServiceRunning
 
-        if (newState) {
-          SafetyForegroundService.start(app)
-          SafetyCheckWorker.schedule(app)
-          GlobalState.isSafetyMonitoringActive = true
-        } else {
-          SafetyForegroundService.stop(app)
-          SafetyCheckWorker.cancel(app)
-          GlobalState.isSafetyMonitoringActive = false
+                        if (newState) {
+                                SafetyForegroundService.start(app)
+                                SafetyCheckWorker.schedule(app)
+                                GlobalState.isSafetyMonitoringActive = true
+                            var prompted = false
+                            repeat(8) {
+                                if (prompted) return@repeat
+                                delay(300)
+                                val service = SafetyForegroundService.getInstance()
+                                if (service != null) {
+                                    service.promptVoiceAssistantActivation()
+                                    prompted = true
+                                }
+                            }
+                        } else {
+                                SafetyForegroundService.stop(app)
+                                SafetyCheckWorker.cancel(app)
+                                GlobalState.isSafetyMonitoringActive = false
+                        }
+
+                        userPreferences.setServiceEnabled(newState)
+                }
         }
 
-        userPreferences.setServiceEnabled(newState)
-      }
-    }
-
-    fun triggerManualSOS() {
-      val service = SafetyForegroundService.getInstance()
-      if (service != null) {
-        service.triggerManualSOS()
-      } else {
-        viewModelScope.launch {
-          if (!_state.value.isServiceRunning) {
-            SafetyForegroundService.start(app)
-            userPreferences.setServiceEnabled(true)
-            GlobalState.isSafetyMonitoringActive = true
-            kotlinx.coroutines.delay(1000)
-          }
-          SafetyForegroundService.getInstance()?.triggerManualSOS()
+        fun triggerManualSOS() {
+                val service = SafetyForegroundService.getInstance()
+                if (service != null) {
+                        service.triggerManualSOS()
+                } else {
+                        viewModelScope.launch {
+                                if (!_state.value.isServiceRunning) {
+                                        SafetyForegroundService.start(app)
+                                        userPreferences.setServiceEnabled(true)
+                                        GlobalState.isSafetyMonitoringActive = true
+                                        delay(1000)
+                                }
+                                SafetyForegroundService.getInstance()?.triggerManualSOS()
+                        }
+                }
         }
-      }
-    }
+
+        fun startVoiceAssistant() {
+            val service = SafetyForegroundService.getInstance()
+            if (service != null) {
+                service.startVoiceAssistantSession()
+                return
+            }
+
+                viewModelScope.launch {
+                        if (!_state.value.isServiceRunning) {
+                                SafetyForegroundService.start(app)
+                                SafetyCheckWorker.schedule(app)
+                                userPreferences.setServiceEnabled(true)
+                                GlobalState.isSafetyMonitoringActive = true
+                                delay(1000)
+                        }
+                SafetyForegroundService.getInstance()?.startVoiceAssistantSession()
+                }
+        }
     
     fun shareLocation() {
         viewModelScope.launch {

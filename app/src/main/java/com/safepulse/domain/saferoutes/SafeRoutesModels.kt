@@ -36,6 +36,20 @@ data class SafeRoute(
     val isRecommended: Boolean = false  // True if this is the safest
 )
 
+data class VoiceNavigationStep(
+val instruction: String,
+val distanceMeters: Int,
+val startLocation: LatLng,
+val endLocation: LatLng
+)
+data class VoiceNavigationRoute(
+val destinationName: String,
+val destination: LatLng,
+val totalDistanceMeters: Int,
+val totalDurationSeconds: Int,
+val steps: List<VoiceNavigationStep>
+)
+
 /**
  * Types of disasters that can affect routes
  */

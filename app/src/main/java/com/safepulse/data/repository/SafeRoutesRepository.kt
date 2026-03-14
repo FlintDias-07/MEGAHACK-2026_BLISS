@@ -10,6 +10,9 @@ import com.safepulse.BuildConfig
 import com.safepulse.domain.saferoutes.RouteRiskAnalyzer
 import com.safepulse.domain.saferoutes.SafeRoute
 import com.safepulse.domain.saferoutes.RiskLevel
+import com.safepulse.domain.saferoutes.VoiceNavigationRoute
+import com.safepulse.domain.saferoutes.VoiceNavigationStep
+import androidx.core.text.HtmlCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -84,6 +87,53 @@ class SafeRoutesRepository(
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching routes", e)
             emptyList()
+        }
+    }
+
+    suspend fun getWalkingNavigationRoute(
+        origin: LatLng,
+        destination: LatLng,
+        destinationName: String
+    ): VoiceNavigationRoute? = withContext(Dispatchers.IO) {
+        try {
+            val result = DirectionsApi.newRequest(geoApiContext)
+                .origin(com.google.maps.model.LatLng(origin.latitude, origin.longitude))
+                .destination(com.google.maps.model.LatLng(destination.latitude, destination.longitude))
+                .mode(TravelMode.WALKING)
+                .alternatives(false)
+                .await()
+
+            val route = result.routes.firstOrNull() ?: return@withContext null
+            val leg = route.legs.firstOrNull() ?: return@withContext null
+
+            val steps = leg.steps.mapNotNull { step ->
+                val instruction = step.htmlInstructions
+                    ?.let { HtmlCompat.fromHtml(it, HtmlCompat.FROM_HTML_MODE_LEGACY).toString() }
+                    ?.replace("\\s+".toRegex(), " ")
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: return@mapNotNull null
+
+                VoiceNavigationStep(
+                    instruction = instruction,
+                    distanceMeters = step.distance?.inMeters?.toInt() ?: 0,
+                    startLocation = LatLng(step.startLocation.lat, step.startLocation.lng),
+                    endLocation = LatLng(step.endLocation.lat, step.endLocation.lng)
+                )
+            }
+
+            if (steps.isEmpty()) return@withContext null
+
+            VoiceNavigationRoute(
+                destinationName = destinationName,
+                destination = destination,
+                totalDistanceMeters = leg.distance?.inMeters?.toInt() ?: 0,
+                totalDurationSeconds = leg.duration?.inSeconds?.toInt() ?: 0,
+                steps = steps
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching walking navigation route", e)
+            null
         }
     }
     

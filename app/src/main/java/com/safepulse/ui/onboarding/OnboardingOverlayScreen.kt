@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 private data class TutorialStep(
     val id: String,
@@ -72,13 +74,20 @@ fun OnboardingOverlayScreen(onComplete: () -> Unit) {
     val step = tutorialSteps[currentStep]
     val isLastStep = currentStep == tutorialSteps.lastIndex
 
-    // Semi-transparent dark overlay
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.72f))
-            .clickable(enabled = false, onClick = {}) // Block touches from passing through
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
     ) {
+        // Semi-transparent dark overlay
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.72f))
+        ) {
         // Tutorial card centered on screen
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -225,5 +234,6 @@ fun OnboardingOverlayScreen(onComplete: () -> Unit) {
                 fontWeight = FontWeight.Medium
             )
         }
+    }
     }
 }

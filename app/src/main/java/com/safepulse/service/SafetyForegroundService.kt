@@ -2,12 +2,16 @@ package com.safepulse.service
 
 import android.content.Context
 import android.content.Intent
+import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Log
 import androidx.lifecycle.LifecycleService
 import com.safepulse.SafePulseApplication
@@ -67,6 +71,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private var countdownJob: Job? = null
     private var lastRiskLevel: RiskLevel = RiskLevel.LOW
     private var monitoringStarted = false
+    private var emergencyFeedbackJob: Job? = null
     
     override fun onCreate() {
         super.onCreate()
@@ -101,6 +106,7 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         stopMonitoring()
+        stopEmergencyFeedbackNow()
         voiceAssistantService.cleanup()
         confirmationService.cleanup()
         serviceScope.cancel()
@@ -355,6 +361,8 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     
     private fun executeEmergencyResponse(event: EmergencyEvent) {
         serviceScope.launch {
+            startEmergencyFeedback()
+
             // Get emergency contacts
             val contacts = contactRepository.getAllContactsList()
             val primaryContact = contactRepository.getPrimaryContact()
@@ -447,6 +455,8 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
             silent = true
         )
 
+        startEmergencyFeedback()
+
         val smsSent = emergencyManager.sendSOSMessages(listOf(contact), event)
         if (!smsSent) return "I could not send the SOS message."
 
@@ -526,6 +536,8 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private fun proceedWithShakeEmergency() {
         serviceScope.launch {
             try {
+                startEmergencyFeedback()
+
                 // Get emergency contacts
                 val contacts = contactRepository.getAllContactsList()
                 
@@ -586,6 +598,8 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     private fun handleVoiceEmergency() {
         serviceScope.launch {
             try {
+                startEmergencyFeedback()
+
                 // Get emergency contacts
                 val contacts = contactRepository.getAllContactsList()
                 
@@ -638,6 +652,84 @@ class SafetyForegroundService : LifecycleService(), SensorEventListener {
     
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // Not needed for this implementation
+    }
+
+    private fun startEmergencyFeedback(durationMs: Long = 20_000L) {
+        emergencyFeedbackJob?.cancel()
+        stopEmergencyFeedbackNow()
+
+        emergencyFeedbackJob = serviceScope.launch {
+            startEmergencyVibration()
+            val torchCameraId = setTorchEnabled(true)
+
+            delay(durationMs)
+
+            stopEmergencyVibration()
+            if (torchCameraId != null) {
+                setTorchEnabled(false, torchCameraId)
+            }
+        }
+    }
+
+    private fun stopEmergencyFeedbackNow() {
+        stopEmergencyVibration()
+        setTorchEnabled(false)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun startEmergencyVibration() {
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+        if (!vibrator.hasVibrator()) return
+
+        try {
+            val effect = VibrationEffect.createWaveform(longArrayOf(0, 500, 300), 0)
+            vibrator.vibrate(effect)
+        } catch (e: Exception) {
+            Log.w("SafetyService", "Could not start emergency vibration", e)
+            return
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun stopEmergencyVibration() {
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+        try {
+            vibrator.cancel()
+        } catch (e: Exception) {
+            Log.w("SafetyService", "Could not stop emergency vibration", e)
+        }
+    }
+
+    private fun setTorchEnabled(enabled: Boolean, preferredCameraId: String? = null): String? {
+        val cameraManager = getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return null
+
+        val cameraId = preferredCameraId ?: findTorchCameraId(cameraManager) ?: return null
+
+        return try {
+            cameraManager.setTorchMode(cameraId, enabled)
+            cameraId
+        } catch (e: SecurityException) {
+            Log.w("SafetyService", "Torch control denied (camera permission missing)", e)
+            null
+        } catch (e: CameraAccessException) {
+            Log.w("SafetyService", "Torch control failed", e)
+            null
+        } catch (e: Exception) {
+            Log.w("SafetyService", "Unexpected torch error", e)
+            null
+        }
+    }
+
+    private fun findTorchCameraId(cameraManager: CameraManager): String? {
+        return try {
+            cameraManager.cameraIdList.firstOrNull { cameraId ->
+                val chars = cameraManager.getCameraCharacteristics(cameraId)
+                chars.get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+            }
+        } catch (e: Exception) {
+            Log.w("SafetyService", "Could not resolve flash camera", e)
+            null
+        }
     }
     
     companion object {

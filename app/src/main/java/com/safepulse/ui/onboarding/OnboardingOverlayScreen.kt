@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,7 +71,7 @@ private val tutorialSteps = listOf(
 
 @Composable
 fun OnboardingOverlayScreen(onComplete: () -> Unit) {
-    var currentStep by remember { mutableStateOf(0) }
+    var currentStep by rememberSaveable { mutableIntStateOf(0) }
     val step = tutorialSteps[currentStep]
     val isLastStep = currentStep == tutorialSteps.lastIndex
 
@@ -175,11 +176,11 @@ fun OnboardingOverlayScreen(onComplete: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Skip button
-                        TextButton(onClick = onComplete) {
-                            Text(
-                                text = stringResource(R.string.extracted_skip),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                            )
+                        OutlinedButton(
+                            onClick = onComplete,
+                            modifier = Modifier.defaultMinSize(minWidth = 92.dp)
+                        ) {
+                            Text(text = stringResource(R.string.extracted_skip))
                         }
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -202,7 +203,8 @@ fun OnboardingOverlayScreen(onComplete: () -> Unit) {
                                 onClick = {
                                     if (isLastStep) onComplete()
                                     else currentStep++
-                                }
+                                },
+                                modifier = Modifier.defaultMinSize(minWidth = 120.dp)
                             ) {
                                 Text(if (isLastStep) stringResource(R.string.action_complete) else stringResource(R.string.action_next))
                                 Spacer(modifier = Modifier.width(4.dp))
